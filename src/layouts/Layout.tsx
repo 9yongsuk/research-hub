@@ -338,7 +338,7 @@ export function Layout() {
       <main
         ref={mainRef}
         className={[
-          "relative mx-auto w-full max-w-7xl flex-1 min-h-0",
+          "relative mx-auto w-full max-w-7xl flex-1 min-h-0 no-scrollbar",
           "px-4 sm:px-6 lg:px-10",
           // ✅ Home: 한 화면 고정 + footer-safe padding
           // ✅ Drawer 열리면 main 스크롤 잠금

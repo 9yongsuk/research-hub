@@ -4,33 +4,33 @@ import { Link } from "react-router-dom";
 export default function Home() {
   return (
     <section className="w-full">
-      {/* ✅ 헤더 높이를 뺀 남은 화면에서 중앙 정렬 */}
-      <div className="min-h-[calc(100svh-56px)] sm:min-h-[calc(100svh-64px)] flex items-center">
+      {/* ✅ 중앙 → 살짝 위로 이동 */}
+      <div className="min-h-[calc(100svh-56px)] sm:min-h-[calc(100svh-64px)] flex items-start pt-[16vh] sm:pt-[18vh]">
         <div className="w-full">
           <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] tracking-[0.18em] uppercase text-white/70 sm:text-xs">
             Translational R&amp;D Platform
           </p>
 
-          {/* 모바일 전용 — 크기만 축소 */}
+          {/* 모바일 */}
           <h1 className="mt-4 sm:hidden max-w-[20ch] font-extrabold leading-[1.15] tracking-[-0.02em] text-white text-[clamp(15px,4.2vw,18px)]">
             Translational <span className="text-sky-400">Bio-AI</span>
             <span className="block">Research Hub</span>
           </h1>
 
-          {/* 데스크탑 (기존 유지) */}
+          {/* 데스크탑 */}
           <h1 className="mt-4 hidden sm:block font-extrabold leading-[1.05] tracking-[-0.03em] text-white text-[clamp(34px,4.2vw,60px)]">
             Translational <span className="text-sky-400">Bio-AI</span>{" "}
             <span className="inline">Research Hub</span>
           </h1>
 
-          <p className="mt-3 sm:mt-5 max-w-[52ch] text-white/78 text-[13px] leading-[1.65] sm:text-[15px] sm:leading-[1.75]">
-            분자기전 연구, 종양 유전체학, 의료 인공지능 모델링을 통합하고, 한의학 기반 중재
-            전략을 과학적으로 재해석하여 기초 생명과학에서 임상 적용까지 연결하는 다학제
-            융합 R&amp;D 플랫폼입니다. 협력 연구 네트워크를 기반으로 질환 기전 규명,
-            후보물질 발굴, 전임상 검증까지 체계적으로 수행합니다.
+          {/* ✅ 3줄로 정리 + max-width 확장 */}
+          <p className="mt-4 sm:mt-6 max-w-[64ch] text-white/80 text-[14px] leading-[1.6] sm:text-[16px] sm:leading-[1.65]">
+            분자기전 연구, 종양 유전체학, 의료 인공지능 모델링을 통합하고 
+            한의학 기반 중재 전략을 과학적으로 재해석하여 기초 생명과학에서 
+            임상 적용까지 연결하는 다학제 융합 R&amp;D 플랫폼입니다. 협력 연구 네트워크를 기반으로 질환 기전 규명, 후보물질 발굴, 전임상 검증까지 체계적으로 수행합니다.
           </p>
 
-          <div className="mt-5 sm:mt-7 flex flex-col gap-3 sm:flex-row sm:gap-4">
+          <div className="mt-6 sm:mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
               to="/services"
               className="

@@ -92,3 +92,13 @@ html, body, #root {
   overflow-x: hidden;
 }
 * { box-sizing: border-box; }
+
+/* ===== main 영역 스크롤바 숨김 ===== */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE, Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari */
+}
