@@ -128,7 +128,7 @@ export default function Team() {
   const roleStyle: Record<string, string> = {
     "연구소장": "bg-emerald-500/10 border-emerald-400/30 text-emerald-300",
     "대표원장": "bg-blue-500/10 border-blue-400/30 text-blue-300",
-    "원장": "bg-amber-500/10 border-amber-400/30 text-amber-300",
+    "원장": "bg-blue-500/10 border-blue-400/30 text-blue-300",
     "Collaborator": "bg-indigo-500/10 border-indigo-400/30 text-indigo-300",
   };
 
