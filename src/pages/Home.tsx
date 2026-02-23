@@ -4,12 +4,13 @@ export default function Home() {
   return (
     <div className="flex min-h-[calc(100vh-140px)] flex-col justify-center">
       <h1 className="text-5xl font-extrabold leading-tight md:text-6xl">
-        한의학의 <span className="text-sky-400">과학적 미래</span>를 연구합니다
+        Translational <span className="text-sky-400">Bio-AI</span> Research Hub
       </h1>
 
-      <p className="mt-6 max-w-xl text-white/80 text-lg">
-        한의학 치료 표준화 및 과학적 검증을 위한 연구를 수행합니다.
-        부설 연구소 기반의 체계적인 R&amp;D 허브입니다.
+      <p className="mt-6 max-w-2xl text-white/80 text-lg leading-relaxed">
+        분자기전 연구, 종양 유전체학, 의료 인공지능 모델링을 통합하여
+        기초 생명과학에서 임상 적용까지 연결하는 다학제 융합 R&amp;D 플랫폼입니다.
+        협력 연구 네트워크를 기반으로 차세대 의생명 연구개발을 수행합니다.
       </p>
 
       <div className="mt-10 flex gap-4">
