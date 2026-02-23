@@ -142,28 +142,52 @@ function FeatureRow({
           </div>
         </section>
 
-        {/* ✅ 3 BOX: 미션 / 핵심 연구축 / 연구인프라·협력 (Mobile: 세로 스택) */}
-        <section className="mt-10 grid gap-4">
-          {aboutContent.sections.map((sec) => (
-            <div key={sec.title} className={`${card} ${padM}`}>
-              <div className="text-[11px] tracking-[0.22em] text-sky-300">
-                {sec.title.toUpperCase()}
-              </div>
-              <h3 className="mt-2 text-[16px] font-semibold text-white leading-tight">
-                {sec.title}
-              </h3>
+      {/* ✅ 3 BOX: 미션 / 핵심 연구축 / 연구인프라·협력 (Mobile: 세로 스택) */}
+      <div className="mt-4 space-y-3 border-l border-white/10 pl-4"></div>
+      <section className="mt-10 grid gap-4">
+        {aboutContent.sections.map((sec) => {
+          // 제목별 아이콘 지정 (위에만 표시)
+          const iconMap: Record<string, string> = {
+            "미션": "🎯",
+            "핵심 연구축": "🧬",
+            "연구인프라/협력": "🤝",
+          };
 
-              <ul className="mt-3 space-y-2">
+          const icon = iconMap[sec.title] ?? "✨";
+
+          return (
+            <div key={sec.title} className={`${card} ${padM}`}>
+              {/* 🔹 제목 영역 (아이콘은 여기만) */}
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[15px]">
+                  {icon}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="text-[11px] tracking-[0.22em] text-sky-300">
+                    {sec.title.toUpperCase()}
+                  </div>
+                  <h3 className="mt-1 text-[16px] font-semibold text-white leading-tight">
+                    {sec.title}
+                  </h3>
+                </div>
+              </div>
+
+              {/* 🔹 본문 영역 (아이콘 제거, 텍스트만) */}
+              <div className="mt-4 space-y-3">
                 {sec.body.map((line, i) => (
-                  <li key={i} className="flex gap-2 text-white/80 text-[13px] leading-[1.75]">
-                    <span className="mt-[3px] text-white/55">•</span>
-                    <span className="min-w-0">{line}</span>
-                  </li>
+                  <p
+                    key={i}
+                    className="text-white/80 text-[13px] leading-[1.7]"
+                  >
+                    {line}
+                  </p>
                 ))}
-              </ul>
+              </div>
             </div>
-          ))}
-        </section>
+          );
+        })}
+      </section>
 
         {/* Timeline (Mobile) */}
         <section className="mt-10">
@@ -186,7 +210,7 @@ function FeatureRow({
               <div className="space-y-5">
                 {aboutContent.history.map((item) => (
                   <div key={item.date} className="relative pl-10">
-                    <div className="absolute left-3 top-[10px] -translate-x-1/2">
+                    <div className="absolute left-3 top-[24px] sm:top-[26px] -translate-x-1/2">
                       <div className="h-3 w-3 rounded-full bg-sky-300 shadow-sm shadow-sky-300/30" />
                       <div className="absolute inset-0 -m-2 rounded-full bg-sky-300/15 blur-md" />
                     </div>
