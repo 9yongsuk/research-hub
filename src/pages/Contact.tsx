@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import emailjs from "@emailjs/browser";
 import { Link } from "react-router-dom";
 
-const RECEIVER_EMAIL = "Roanresearchcenter@google.com";
+const RECEIVER_EMAIL = "Roanresearchcenter@gmail.com";
 
 const Badge = ({ children }: any) => (
   <span className="inline-flex items-center rounded-full border border-white/20 bg-white/5 backdrop-blur px-3 py-1 text-xs text-white/80">
