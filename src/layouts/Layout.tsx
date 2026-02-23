@@ -37,18 +37,19 @@ export function Layout() {
       {/* ===== 공통 헤더 ===== */}
       <header className="relative w-full">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6 lg:px-10">
-          <Link to="/" className="flex items-center gap-3">
-            <img
-              src={`${base}logo.png`}
-              alt="로안생명공학연구소 로고"
-              className="h-10 w-auto object-contain"
-              loading="eager"
-              decoding="async"
-            />
-            <span className="hidden text-lg font-semibold tracking-tight sm:block">
-              로안생명공학연구소
-            </span>
-          </Link>
+        <Link to="/" className="flex min-w-0 items-center gap-3">
+          <img
+            src={`${base}logo.png`}
+            alt="로안생명공학연구소 로고"
+            className="h-10 w-auto object-contain"
+            loading="eager"
+            decoding="async"
+          />
+          <span className="min-w-0 truncate text-base font-semibold tracking-tight sm:text-lg">
+            <span className="sm:hidden">로안연구소</span>
+            <span className="hidden sm:inline">로안생명공학연구소</span>
+          </span>
+        </Link>
 
           {/* 데스크탑 메뉴 */}
           <nav className="hidden gap-8 text-sm text-white/80 md:flex">
