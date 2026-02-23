@@ -24,7 +24,7 @@ export default function Home() {
           </h1>
 
           {/* ✅ 3줄로 정리 + max-width 확장 */}
-          <p className="mt-4 sm:mt-6 max-w-[80ch] text-white/80 text-[14px] leading-[1.6] sm:text-[16px] sm:leading-[1.65]">
+          <p className="mt-4 sm:mt-6 max-w-[84ch] text-white/80 text-[14px] leading-[1.6] sm:text-[16px] sm:leading-[1.65]">
             분자기전 연구, 종양 유전체학, 의료 인공지능 모델링을 통합하고 
             한의학 기반 중재 전략을 과학적으로 재해석하여 기초 생명과학에서 
             임상 적용까지 연결하는 다학제 융합 R&amp;D 플랫폼입니다. 협력 연구 네트워크를 기반으로 질환 기전 규명, 후보물질 발굴, 전임상 검증까지 체계적으로 수행합니다.

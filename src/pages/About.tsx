@@ -372,26 +372,27 @@ function FeatureRow({
               <div className="absolute left-3 top-0 bottom-0 w-px bg-white/12" />
 
               <div className="space-y-8">
-                {aboutContent.history.map((item) => (
-                  <div key={item.date} className="relative pl-12">
-                    <div className="absolute left-3 top-[12px] -translate-x-1/2">
-                      <div className="h-3 w-3 rounded-full bg-sky-300 shadow-sm shadow-sky-300/30" />
-                      <div className="absolute inset-0 -m-2 rounded-full bg-sky-300/15 blur-md" />
+              {aboutContent.history.map((item) => (
+                <div key={item.date} className="relative pl-10">
+                  {/* ✅ 점: 각 박스의 세로 중앙에 오도록 */}
+                  <div className="absolute left-3 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                    <div className="h-3 w-3 rounded-full bg-sky-300 shadow-sm shadow-sky-300/30" />
+                    <div className="absolute inset-0 -m-2 rounded-full bg-sky-300/15 blur-md" />
+                  </div>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-3">
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <div className="text-sky-300 text-[14px] font-bold">
+                        {item.date}
+                      </div>
                     </div>
 
-                    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-6 py-5">
-                      <div className="flex items-baseline gap-3">
-                        <div className="text-sky-300 text-base font-bold">
-                          {item.date}
-                        </div>
-                      </div>
-
-                      <div className="mt-2 text-[15px] text-white/85 leading-relaxed">
-                        {item.text}
-                      </div>
+                    <div className="mt-2 text-[13px] text-white/85 leading-[1.75]">
+                      {item.text}
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
               </div>
 
             </div>
