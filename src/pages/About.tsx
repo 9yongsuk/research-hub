@@ -68,7 +68,6 @@ function FeatureRow({
 
   // 공통 카드 톤
   const card = "rounded-3xl border border-white/10 bg-black/25 backdrop-blur-md";
-  const cardSoft = "rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm";
   const padM = "p-5";
   const padD = "p-8";
 
