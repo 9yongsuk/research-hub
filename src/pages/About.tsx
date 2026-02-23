@@ -14,7 +14,10 @@ export default function About() {
           </h1>
 
           {aboutContent.heroSubtitle.map((p, i) => (
-            <p key={i} className="mt-4 text-white/80 leading-relaxed sm:mt-5">
+            <p
+              key={i}
+              className="mt-4 text-sm text-white/80 leading-relaxed sm:mt-5 sm:text-base"
+            >
               {p}
             </p>
           ))}
@@ -26,19 +29,23 @@ export default function About() {
                 key={s.label}
                 className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 text-center backdrop-blur-sm"
               >
-                <div className="text-2xl font-extrabold">{s.value}</div>
-                <div className="mt-1 text-sm text-white/70">{s.label}</div>
+                <div className="text-xl font-extrabold sm:text-2xl">
+                  {s.value}
+                </div>
+                <div className="mt-1 text-xs text-white/70 sm:text-sm">
+                  {s.label}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* 오른쪽 이미지 */}
+        {/* 이미지 */}
         <div className="relative overflow-hidden rounded-3xl border border-white/10">
           <img
             src={`${base}about-hero.webp`}
             alt="연구소 이미지"
-            className="h-[220px] w-full object-cover sm:h-[300px] lg:h-[420px]"
+            className="h-[200px] w-full object-cover sm:h-[300px] lg:h-[420px]"
             decoding="async"
             fetchPriority="high"
           />
@@ -47,15 +54,17 @@ export default function About() {
 
       {/* ===== 상세 연구 내용 ===== */}
       <section className="mt-12 sm:mt-16 rounded-3xl border border-white/10 bg-black/25 p-6 sm:p-8 backdrop-blur-md">
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid gap-10 md:grid-cols-3">
           {aboutContent.sections.map((sec) => (
-            <div key={sec.title} className="min-w-0">
-              <h3 className="text-lg font-semibold sm:text-xl">{sec.title}</h3>
-              <ul className="mt-3 sm:mt-4 space-y-2 text-white/80 leading-relaxed">
+            <div key={sec.title}>
+              <h3 className="text-lg font-semibold sm:text-xl">
+                {sec.title}
+              </h3>
+              <ul className="mt-3 space-y-2 text-sm text-white/80 leading-relaxed sm:text-base">
                 {sec.body.map((line, i) => (
                   <li key={i} className="flex gap-2">
                     <span className="mt-[2px] text-white/60">•</span>
-                    <span className="min-w-0">{line}</span>
+                    <span>{line}</span>
                   </li>
                 ))}
               </ul>
@@ -67,42 +76,29 @@ export default function About() {
       {/* ===== 연구소 연혁 ===== */}
       <section className="mt-14 sm:mt-20">
         <div className="text-center">
-          <div className="text-xs tracking-widest text-sky-300">HISTORY</div>
-          <h2 className="mt-2 text-2xl font-extrabold sm:text-4xl">연구소 연혁</h2>
+          <div className="text-xs tracking-widest text-sky-300">
+            HISTORY
+          </div>
+          <h2 className="mt-2 text-2xl font-extrabold sm:text-4xl">
+            연구소 연혁
+          </h2>
         </div>
 
         <div className="mt-10 sm:mt-14 mx-auto max-w-3xl">
-          <div className="relative">
-            {/* 세로 라인 (sm 이상에서만) */}
-            <div className="absolute left-[176px] top-0 h-full w-px bg-white/20 hidden sm:block" />
-
-            <div className="space-y-6 sm:space-y-12">
-              {aboutContent.history.map((item) => (
-                <div
-                  key={item.date}
-                  className="grid gap-3 sm:grid-cols-[140px_40px_1fr] sm:items-center sm:gap-4"
-                >
-                  {/* 연도 */}
-                  <div className="text-sky-300 text-lg font-extrabold sm:text-right sm:text-xl">
-                    {item.date}
-                  </div>
-
-                  {/* dot */}
-                  <div className="hidden sm:flex justify-center">
-                    <div className="h-3 w-3 rounded-full bg-sky-400" />
-                  </div>
-
-                  {/* 모바일에서는 내용 카드 안에 dot + 날짜를 함께 보여도 되지만,
-                      지금은 날짜가 위에 있으니 dot은 숨기고 카드만 강조 */}
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-5 backdrop-blur-sm text-white/85 leading-relaxed">
-                    {item.text}
-                  </div>
+          <div className="space-y-6 sm:space-y-10">
+            {aboutContent.history.map((item) => (
+              <div
+                key={item.date}
+                className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 backdrop-blur-sm"
+              >
+                <div className="text-sky-300 text-lg font-bold sm:text-xl">
+                  {item.date}
                 </div>
-              ))}
-            </div>
-
-            {/* 모바일 가독성 보강: 얇은 구분선(선택) */}
-            <div className="mt-8 sm:hidden border-t border-white/10" />
+                <div className="mt-2 text-sm text-white/85 leading-relaxed sm:text-base">
+                  {item.text}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

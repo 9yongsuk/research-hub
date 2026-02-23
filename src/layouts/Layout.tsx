@@ -46,7 +46,7 @@ export function Layout() {
             decoding="async"
           />
           <span className="min-w-0 truncate text-base font-semibold tracking-tight sm:text-lg">
-            <span className="sm:hidden">로안연구소</span>
+            <span className="sm:hidden">로안생명공학연구소</span>
             <span className="hidden sm:inline">로안생명공학연구소</span>
           </span>
         </Link>

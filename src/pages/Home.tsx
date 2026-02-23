@@ -3,9 +3,8 @@ import { Link } from "react-router-dom";
 export default function Home() {
   return (
     <div className="flex min-h-[calc(100vh-140px)] flex-col justify-center">
-      <h1 className="text-3xl font-extrabold leading-snug sm:text-4xl md:text-6xl">
-        Translational <span className="text-sky-400">Bio-AI</span>
-        <br className="hidden sm:block" />
+      <h1 className="max-w-[18ch] text-3xl font-extrabold leading-snug whitespace-normal sm:max-w-none sm:text-4xl md:text-6xl">
+        Translational <span className="text-sky-400">Bio-AI</span>{" "}
         <span className="block sm:inline">Research Hub</span>
       </h1>
 
