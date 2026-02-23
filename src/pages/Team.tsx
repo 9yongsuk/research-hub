@@ -1,5 +1,5 @@
 // src/pages/Team.tsx
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { teamMembers } from "../content/team";
 import type { Person } from "../content/team";
 

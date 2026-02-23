@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import emailjs from "@emailjs/browser";
 import { Link } from "react-router-dom";
 
