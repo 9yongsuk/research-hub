@@ -142,7 +142,7 @@ export const teamMembers: Person[] = [
     id: "seoyeong-won",
     role: "원장",
     nameKo: "원서영",
-    nameEn: "",
+    nameEn: "Seo-Young Won",
     titleLine: "한의학박사 / 한방내과전문의",
     education: [
       { period: "2009-2018", text: "대전대학교 한의학과 한의학사" },
