@@ -1,19 +1,20 @@
 // src/pages/Team.tsx
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { teamMembers } from "../content/team";
 import type { Person } from "../content/team";
 
-/* ---------- Tone-down Role Pill ---------- */
-function RolePill({ role }: { role: string }) {
+/* ---------- Role Pill (✅ Role에만 컬러/강조) ---------- */
+function RolePill({ role, active }: { role: string; active?: boolean }) {
   return (
     <div
-      className="
-        inline-flex items-center px-3 py-1 rounded-full
-        text-[11px] uppercase tracking-[0.25em]
-        border border-white/15
-        bg-white/5
-        text-white/70
-      "
+      className={[
+        "inline-flex items-center px-3 py-1 rounded-full",
+        "text-[11px] uppercase tracking-[0.25em]",
+        "border backdrop-blur-sm transition-colors",
+        active
+          ? "border-sky-300/40 bg-sky-400/15 text-sky-100"
+          : "border-white/15 bg-white/5 text-white/70",
+      ].join(" ")}
     >
       {role}
     </div>
@@ -86,7 +87,24 @@ function TagList({ items }: { items: string[] }) {
   );
 }
 
-/* ---------- Person Card ---------- */
+/* ---------- Glow Dot (active indicator) ---------- */
+function GlowDot({ on }: { on: boolean }) {
+  return (
+    <span
+      className={[
+        "relative inline-flex h-2.5 w-2.5 shrink-0 rounded-full",
+        "transition-opacity duration-200",
+        on ? "opacity-100" : "opacity-0",
+      ].join(" ")}
+      aria-hidden="true"
+    >
+      <span className="absolute inset-0 rounded-full bg-sky-300" />
+      <span className="absolute -inset-2 rounded-full bg-sky-300/25 blur-md" />
+    </span>
+  );
+}
+
+/* ---------- Person Card (Mobile list item) ---------- */
 
 function PersonCard({
   person,
@@ -105,23 +123,32 @@ function PersonCard({
         "w-full text-left rounded-2xl border transition-all duration-200",
         "bg-black/60 backdrop-blur-md",
         "p-4",
+        // ✅ 클릭/활성 느낌 유지
         isActive
-          ? "border-sky-400 shadow-xl"
+          ? "border-sky-400 shadow-[0_0_0_1px_rgba(56,189,248,0.35),0_18px_45px_-25px_rgba(56,189,248,0.55)]"
           : "border-white/10 hover:bg-black/70",
       ].join(" ")}
     >
-      <RolePill role={person.role} />
+      {/* ✅ Role에만 컬러 */}
+      <RolePill role={person.role} active={isActive} />
 
+      {/* ✅ 이름은 색 넣지 않음 + active 불(점)만 */}
       <div className="mt-2 font-extrabold text-white leading-snug">
-        <span className="block text-[16px]">{person.nameKo}</span>
+        <div className="flex items-center gap-2">
+          <span className="block text-[16px]">{person.nameKo}</span>
+          <GlowDot on={isActive} />
+        </div>
+
+        {/* ✅ 영문 이름: 길어도 2줄까지, truncate 금지 */}
         {person.nameEn && (
-          <span className="block text-[12px] text-white/60 mt-0.5">
+          <div className="mt-0.5 text-[12px] text-white/60 leading-snug line-clamp-2 break-words">
             {person.nameEn}
-          </span>
+          </div>
         )}
       </div>
 
-      <div className="mt-1 text-[13px] text-white/75 leading-[1.6]">
+      {/* ✅ 직책: 1줄로 잘리지 않게 line-clamp 완화 */}
+      <div className="mt-1 text-[13px] text-white/75 leading-[1.6] line-clamp-3 break-words">
         {person.titleLine}
       </div>
     </button>
@@ -259,15 +286,22 @@ function DesktopDetail({ person }: { person: Person }) {
     <div className="rounded-3xl border border-white/10 bg-black/25 p-6 backdrop-blur-md">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <RolePill role={person.role} />
+          {/* ✅ Role만 강조 */}
+          <RolePill role={person.role} active />
+
           <div className="mt-3">
             <div className="text-2xl font-extrabold text-white leading-tight">
               {person.nameKo}
             </div>
+
+            {/* ✅ 영문 이름 2줄까지 */}
             {person.nameEn && (
-              <div className="mt-1 text-sm text-white/60">{person.nameEn}</div>
+              <div className="mt-1 text-sm text-white/60 leading-snug line-clamp-2 break-words">
+                {person.nameEn}
+              </div>
             )}
-            <div className="mt-3 text-[14px] text-white/80 leading-relaxed">
+
+            <div className="mt-3 text-[14px] text-white/80 leading-relaxed break-words">
               {person.titleLine}
             </div>
           </div>
@@ -319,13 +353,17 @@ function DesktopDetail({ person }: { person: Person }) {
 
         {person.professionalEditorialService?.length && (
           <SectionBlock title="Professional Editorial Service">
-            <BulletList items={person.professionalEditorialService.map((x) => x.text)} />
+            <BulletList
+              items={person.professionalEditorialService.map((x) => x.text)}
+            />
           </SectionBlock>
         )}
 
         {person.professionalMemberships?.length && (
           <SectionBlock title="Professional Memberships">
-            <BulletList items={person.professionalMemberships.map((x) => x.text)} />
+            <BulletList
+              items={person.professionalMemberships.map((x) => x.text)}
+            />
           </SectionBlock>
         )}
 
@@ -354,22 +392,44 @@ function DesktopDetail({ person }: { person: Person }) {
 /* ---------- Main ---------- */
 
 export default function Team() {
-  // ✅ 초기값이 ""이면 처음 들어왔을 때 아무도 선택 안 되어 보일 수 있음
-  // 데스크탑 UX에선 첫 번째 멤버를 기본 선택으로 두는 게 자연스럽습니다.
   const defaultId = teamMembers[0]?.id ?? "";
   const [activeId, setActiveId] = useState<string>(defaultId);
+
+  // ✅ 모바일에서 클릭한 카드가 화면 위쪽으로 오도록 (Layout main에서도 잘 먹히게 scrollIntoView 사용)
+  const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const activePerson = useMemo(
     () => teamMembers.find((p) => p.id === activeId) ?? teamMembers[0],
     [activeId]
   );
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Desktop(lg+)에서는 스크롤 조정하지 않음
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+    if (isDesktop) return;
+
+    if (!activeId) return;
+
+    const target = itemRefs.current[activeId];
+    if (!target) return;
+
+    // ✅ 헤더/여백 고려: scroll-margin-top을 주고 start로 이동
+    // (Tailwind: scroll-mt-* 클래스가 실제로 margin-top처럼 offset 역할)
+    try {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch {
+      target.scrollIntoView();
+    }
+  }, [activeId]);
+
   return (
     <div className="py-6">
       <div className="rounded-3xl border border-white/10 bg-black/25 p-5 backdrop-blur-md">
         <div>
           <div className="text-[11px] tracking-[0.3em] text-sky-300">TEAM</div>
-          <h1 className="mt-2 font-extrabold text-[clamp(22px,6vw,30px)]">
+          <h1 className="mt-2 font-extrabold text-[22px] sm:text-[28px] lg:text-[40px] leading-tight tracking-[-0.02em]">
             연구진 소개
           </h1>
           <p className="mt-3 text-[13px] text-white/75 leading-[1.65]">
@@ -382,8 +442,16 @@ export default function Team() {
         <div className="mt-6 space-y-4 lg:hidden">
           {teamMembers.map((p) => {
             const open = p.id === activeId;
+
             return (
-              <div key={p.id}>
+              <div
+                key={p.id}
+                ref={(el) => {
+                  itemRefs.current[p.id] = el;
+                }}
+                // ✅ scrollIntoView 시 상단이 너무 딱 붙지 않게 offset 역할
+                className="scroll-mt-4"
+              >
                 <PersonCard
                   person={p}
                   isActive={open}
@@ -398,39 +466,70 @@ export default function Team() {
         {/* ===== Desktop: 좌측 리스트 + 우측 상세 ===== */}
         <div className="mt-6 hidden lg:grid lg:grid-cols-12 lg:gap-6">
           {/* Left List */}
-          <div className="lg:col-span-4 xl:col-span-3">
+          <div className="lg:col-span-5 xl:col-span-3">
             <div className="space-y-3">
               {teamMembers.map((p) => {
                 const active = p.id === activeId;
+
                 return (
                   <button
                     key={p.id}
                     type="button"
                     onClick={() => setActiveId(p.id)}
                     className={[
-                      "w-full text-left rounded-2xl border p-4 transition-all duration-200",
+                      "group w-full text-left rounded-2xl border p-4 transition-all duration-200",
                       "bg-black/35 backdrop-blur-md",
                       active
-                        ? "border-sky-400 shadow-xl"
+                        ? "border-sky-400 shadow-[0_0_0_1px_rgba(56,189,248,0.35),0_18px_45px_-25px_rgba(56,189,248,0.55)]"
                         : "border-white/10 hover:bg-black/45",
                     ].join(" ")}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <div className="text-[13px] font-extrabold text-white truncate">
-                          {p.nameKo}
+                        {/* ✅ 이름은 그냥 흰색(색 X) + active dot */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13px] font-extrabold text-white">
+                            {p.nameKo}
+                          </span>
+
+                          <span
+                            className={[
+                              "relative inline-flex h-2.5 w-2.5 shrink-0 rounded-full",
+                              "transition-opacity duration-200",
+                              active ? "opacity-100" : "opacity-0 group-hover:opacity-60",
+                            ].join(" ")}
+                            aria-hidden="true"
+                          >
+                            <span className="absolute inset-0 rounded-full bg-sky-300" />
+                            <span className="absolute -inset-2 rounded-full bg-sky-300/25 blur-md" />
+                          </span>
                         </div>
+
+                        {/* ✅ 영문 이름 2줄 */}
                         {p.nameEn && (
-                          <div className="mt-0.5 text-[11px] text-white/55 truncate">
+                          <div className="mt-1 text-[11px] text-white/55 leading-snug line-clamp-2 break-words">
                             {p.nameEn}
                           </div>
                         )}
-                        <div className="mt-2 text-[12px] text-white/70 line-clamp-2">
+
+                        {/* ✅ 직책 4줄 */}
+                        <div
+                          className="
+                            mt-2
+                            text-[11px] text-white/70 leading-[1.55]
+                            line-clamp-6
+                            whitespace-normal
+                            break-words
+                            [overflow-wrap:anywhere]
+                          "
+                        >
                           {p.titleLine}
                         </div>
                       </div>
+
+                      {/* ✅ RolePill만 컬러 */}
                       <div className="shrink-0">
-                        <RolePill role={p.role} />
+                        <RolePill role={p.role} active={active} />
                       </div>
                     </div>
                   </button>
@@ -452,7 +551,6 @@ export default function Team() {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

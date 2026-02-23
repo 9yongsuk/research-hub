@@ -1,14 +1,10 @@
 // src/pages/About.tsx
 import { aboutContent } from "../content/about";
 
-export default function About() {
-  const base = import.meta.env.BASE_URL;
-
-  function splitLine(line: string) {
-  // ":" / "—" / " - " 를 기준으로 "요약 / 부연" 분리
-  const candidates = [":", "—", " - "];
-
-  for (const sep of candidates) {
+function splitLine(line: string) {
+  // ":" / "—" / " - " 기준으로 "요약 / 부연" 분리
+  const seps = [":", "—", " - "];
+  for (const sep of seps) {
     const idx = line.indexOf(sep);
     if (idx > 0) {
       const head = line.slice(0, idx).trim();
@@ -16,55 +12,26 @@ export default function About() {
       if (head && tail) return { head, tail };
     }
   }
-
-  // 분리 불가면 전체를 요약으로
   return { head: line.trim(), tail: "" };
 }
 
-function sectionMeta(title: string) {
-  const t = title.replace(/\s/g, "").toLowerCase();
-
-  // title에 따라 아이콘/라벨 톤을 통일감 있게
-  if (t.includes("미션")) return { icon: "🎯", eyebrow: "MISSION" };
-  if (t.includes("핵심") || t.includes("연구축")) return { icon: "🧬", eyebrow: "CORE AXES" };
-  if (t.includes("인프라") || t.includes("협력")) return { icon: "🤝", eyebrow: "INFRA / PARTNERS" };
-
-  // fallback
-  return { icon: "✨", eyebrow: title.toUpperCase() };
-}
-
-function FeatureRow({
-  icon,
-  head,
-  tail,
-}: {
-  icon: string;
-  head: string;
-  tail?: string;
-}) {
+function FeatureRowText({ head, tail }: { head: string; tail?: string }) {
   return (
-    <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-      {/* icon chip */}
-      <div className="shrink-0">
-        <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-white/10 bg-black/30 text-[16px]">
-          {icon}
-        </div>
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition hover:bg-white/[0.07]">
+      <div className="text-[14px] font-semibold text-white leading-snug">
+        {head}
       </div>
-
-      {/* text */}
-      <div className="min-w-0">
-        <div className="text-[14px] font-semibold text-white leading-snug">
-          {head}
+      {tail ? (
+        <div className="mt-1 text-[12.5px] text-white/70 leading-relaxed">
+          {tail}
         </div>
-        {tail ? (
-          <div className="mt-1 text-[12.5px] text-white/70 leading-relaxed">
-            {tail}
-          </div>
-        ) : null}
-      </div>
+      ) : null}
     </div>
   );
 }
+
+export default function About() {
+  const base = import.meta.env.BASE_URL;
 
   // 공통 카드 톤
   const card = "rounded-3xl border border-white/10 bg-black/25 backdrop-blur-md";
@@ -74,7 +41,7 @@ function FeatureRow({
   return (
     <div className="py-6 sm:py-12">
       {/* ===========================
-          MOBILE LAYOUT (<= md)
+          MOBILE LAYOUT (< lg)
           =========================== */}
       <div className="block lg:hidden">
         {/* HERO (Mobile): 텍스트 위, 이미지 아래 */}
@@ -84,17 +51,13 @@ function FeatureRow({
               ABOUT
             </div>
 
-            {/* ✅ 모바일 H1: 가독성 우선, 과도한 확대 방지 */}
-            <h1 className="mt-2 font-extrabold text-[22px] leading-[1.18] tracking-[-0.01em] text-white">
+            <h1 className="mt-2 font-extrabold text-[22px] sm:text-[26px] lg:text-[36px] leading-[1.18] tracking-[-0.01em] text-white">
               {aboutContent.heroTitle}
             </h1>
 
             <div className="mt-3 space-y-3">
               {aboutContent.heroSubtitle.map((p, i) => (
-                <p
-                  key={i}
-                  className="text-white/80 text-[13px] leading-[1.75]"
-                >
+                <p key={i} className="text-white/80 text-[13px] leading-[1.75]">
                   {p}
                 </p>
               ))}
@@ -124,7 +87,7 @@ function FeatureRow({
             </div>
           </div>
 
-          {/* Image (Mobile): 너무 커 보이지 않게 높이 고정 + 살짝 라운드 */}
+          {/* Image (Mobile) */}
           <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/20">
             <img
               src={`${base}about-hero.webp`}
@@ -142,38 +105,19 @@ function FeatureRow({
           </div>
         </section>
 
-      {/* ✅ 3 BOX: 미션 / 핵심 연구축 / 연구인프라·협력 (Mobile: 세로 스택) */}
-      <div className="mt-4 space-y-3 border-l border-white/10 pl-4"></div>
-      <section className="mt-10 grid gap-4">
-        {aboutContent.sections.map((sec) => {
-          // 제목별 아이콘 지정 (위에만 표시)
-          const iconMap: Record<string, string> = {
-            "미션": "🎯",
-            "핵심 연구축": "🧬",
-            "연구인프라/협력": "🤝",
-          };
-
-          const icon = iconMap[sec.title] ?? "✨";
-
-          return (
+        {/* ✅ 3 BOX (Mobile): 아이콘 없음, 가독성 중심 */}
+        <section className="mt-10 grid gap-4">
+          {aboutContent.sections.map((sec) => (
             <div key={sec.title} className={`${card} ${padM}`}>
-              {/* 🔹 제목 영역 (아이콘은 여기만) */}
-              <div className="flex items-start gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[15px]">
-                  {icon}
+              <div className="min-w-0">
+                <div className="text-[11px] tracking-[0.22em] text-sky-300">
+                  {sec.title.toUpperCase()}
                 </div>
-
-                <div className="min-w-0">
-                  <div className="text-[11px] tracking-[0.22em] text-sky-300">
-                    {sec.title.toUpperCase()}
-                  </div>
-                  <h3 className="mt-1 text-[16px] font-semibold text-white leading-tight">
-                    {sec.title}
-                  </h3>
-                </div>
+                <h3 className="mt-1 text-[16px] font-semibold text-white leading-tight">
+                  {sec.title}
+                </h3>
               </div>
 
-              {/* 🔹 본문 영역 (아이콘 제거, 텍스트만) */}
               <div className="mt-4 space-y-3">
                 {sec.body.map((line, i) => (
                   <p
@@ -185,9 +129,8 @@ function FeatureRow({
                 ))}
               </div>
             </div>
-          );
-        })}
-      </section>
+          ))}
+        </section>
 
         {/* Timeline (Mobile) */}
         <section className="mt-10">
@@ -205,12 +148,14 @@ function FeatureRow({
 
           <div className="mt-7 mx-auto max-w-3xl">
             <div className="relative">
+              {/* 세로 라인 */}
               <div className="absolute left-3 top-0 bottom-0 w-px bg-white/12" />
 
               <div className="space-y-5">
                 {aboutContent.history.map((item) => (
                   <div key={item.date} className="relative pl-10">
-                    <div className="absolute left-3 top-[24px] sm:top-[26px] -translate-x-1/2">
+                    {/* ✅ 점: 박스 세로 중앙 정렬 */}
+                    <div className="absolute left-3 top-1/2 -translate-x-1/2 -translate-y-1/2">
                       <div className="h-3 w-3 rounded-full bg-sky-300 shadow-sm shadow-sky-300/30" />
                       <div className="absolute inset-0 -m-2 rounded-full bg-sky-300/15 blur-md" />
                     </div>
@@ -229,7 +174,6 @@ function FeatureRow({
                   </div>
                 ))}
               </div>
-
             </div>
           </div>
         </section>
@@ -239,7 +183,7 @@ function FeatureRow({
           DESKTOP / WEB LAYOUT (>= lg)
           =========================== */}
       <div className="hidden lg:block">
-        {/* HERO (Desktop): 텍스트/이미지 비율 고정해서 "글씨 커짐→이미지도 커짐" 방지 */}
+        {/* HERO (Desktop) */}
         <section className="grid gap-8 lg:grid-cols-12 lg:items-stretch">
           {/* Text (좌) */}
           <div className="lg:col-span-7">
@@ -248,15 +192,21 @@ function FeatureRow({
                 ABOUT
               </div>
 
-              {/* ✅ 웹 H1: 너무 커지지 않도록 clamp 상한을 낮춤 */}
-              <h1 className="mt-2 font-extrabold text-white leading-[1.12] tracking-[-0.015em]
-                             text-[clamp(26px,2.2vw,34px)] max-w-[26ch]">
+              <h1
+                className="
+                  mt-2 font-extrabold text-white leading-[1.12] tracking-[-0.015em]
+                  text-[clamp(26px,2.2vw,34px)] max-w-[26ch]
+                "
+              >
                 {aboutContent.heroTitle}
               </h1>
 
               <div className="mt-4 space-y-3">
                 {aboutContent.heroSubtitle.map((p, i) => (
-                  <p key={i} className="text-white/80 text-[15px] leading-relaxed max-w-[72ch]">
+                  <p
+                    key={i}
+                    className="text-white/80 text-[15px] leading-relaxed max-w-[72ch]"
+                  >
                     {p}
                   </p>
                 ))}
@@ -281,14 +231,12 @@ function FeatureRow({
                 </div>
               </div>
 
-              {/* 균형용 */}
               <div className="mt-6" />
             </div>
           </div>
 
           {/* Image (우) */}
           <div className="lg:col-span-5">
-            {/* ✅ 이미지가 과도하게 커 보이지 않도록 높이를 고정 */}
             <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/20 h-full min-h-[360px]">
               <img
                 src={`${base}about-hero.webp`}
@@ -308,57 +256,43 @@ function FeatureRow({
           </div>
         </section>
 
-        {/* ✅ 3 BOX (Desktop): 아이콘 + 요약/부연 카드형 리스트 */}
-          <section className="mt-16">
-            <div className="grid grid-cols-3 gap-6">
-              {aboutContent.sections.map((sec) => {
-                const meta = sectionMeta(sec.title);
-
-                return (
-                  <div key={sec.title} className={`${card} ${padD} h-full`}>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="text-[11px] tracking-[0.22em] text-sky-300">
-                          {meta.eyebrow}
-                        </div>
-                        <h3 className="mt-2 text-xl font-semibold text-white leading-tight">
-                          {sec.title}
-                        </h3>
-                      </div>
-
-                      {/* section icon (큰 포인트) */}
-                      <div className="shrink-0">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[18px]">
-                          {meta.icon}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 grid gap-3">
-                      {sec.body.map((line, i) => {
-                        const { head, tail } = splitLine(line);
-                        return (
-                          <FeatureRow
-                            key={`${sec.title}-${i}`}
-                            icon={meta.icon}
-                            head={head}
-                            tail={tail}
-                          />
-                        );
-                      })}
-                    </div>
+        {/* ✅ 3 BOX (Desktop): 아이콘 없이 고급스러운 "요약 + 부연" 카드형 */}
+        <section className="mt-16">
+          <div className="grid grid-cols-3 gap-6">
+            {aboutContent.sections.map((sec) => (
+              <div key={sec.title} className={`${card} ${padD} h-full`}>
+                {/* Header */}
+                <div>
+                  <div className="text-[11px] tracking-[0.22em] text-sky-300">
+                    {sec.title.toUpperCase()}
                   </div>
-                );
-              })}
-            </div>
-          </section>
+                  <h3 className="mt-2 text-xl font-semibold text-white leading-tight">
+                    {sec.title}
+                  </h3>
+                </div>
+
+                {/* Body (Feature list) */}
+                <div className="mt-5 grid gap-3">
+                  {sec.body.map((line, i) => {
+                    const { head, tail } = splitLine(line);
+                    return (
+                      <FeatureRowText
+                        key={`${sec.title}-${i}`}
+                        head={head}
+                        tail={tail}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Timeline (Desktop) */}
         <section className="mt-16">
           <div className="text-center">
-            <div className="text-xs tracking-[0.22em] text-sky-300">
-              HISTORY
-            </div>
+            <div className="text-xs tracking-[0.22em] text-sky-300">HISTORY</div>
             <h2 className="mt-2 text-4xl font-extrabold text-white">
               연구소 연혁
             </h2>
@@ -372,29 +306,28 @@ function FeatureRow({
               <div className="absolute left-3 top-0 bottom-0 w-px bg-white/12" />
 
               <div className="space-y-8">
-              {aboutContent.history.map((item) => (
-                <div key={item.date} className="relative pl-10">
-                  {/* ✅ 점: 각 박스의 세로 중앙에 오도록 */}
-                  <div className="absolute left-3 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <div className="h-3 w-3 rounded-full bg-sky-300 shadow-sm shadow-sky-300/30" />
-                    <div className="absolute inset-0 -m-2 rounded-full bg-sky-300/15 blur-md" />
-                  </div>
+                {aboutContent.history.map((item) => (
+                  <div key={item.date} className="relative pl-10">
+                    {/* ✅ 점: 박스 세로 중앙 정렬 */}
+                    <div className="absolute left-3 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                      <div className="h-3 w-3 rounded-full bg-sky-300 shadow-sm shadow-sky-300/30" />
+                      <div className="absolute inset-0 -m-2 rounded-full bg-sky-300/15 blur-md" />
+                    </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-3">
-                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      <div className="text-sky-300 text-[14px] font-bold">
-                        {item.date}
+                    <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm px-6 py-5">
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <div className="text-sky-300 text-[14px] font-bold">
+                          {item.date}
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-[15px] text-white/85 leading-relaxed">
+                        {item.text}
                       </div>
                     </div>
-
-                    <div className="mt-2 text-[13px] text-white/85 leading-[1.75]">
-                      {item.text}
-                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
               </div>
-
             </div>
           </div>
         </section>

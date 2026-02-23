@@ -169,7 +169,7 @@ export function Layout() {
           </Link>
 
           {/* 데스크탑 메뉴 (같은 탭 클릭 시에도 스크롤 top + 리마운트) */}
-          <nav className="hidden gap-8 text-sm text-white/80 md:flex">
+          <nav className="hidden gap-8 text-base lg:text-[17px] text-white/80 md:flex">
             <Link to="/" className="hover:text-white" onClick={handleNavClick("/")}>
               홈
             </Link>
