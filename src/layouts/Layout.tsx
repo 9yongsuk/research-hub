@@ -111,6 +111,19 @@ export function Layout() {
     return () => el.removeEventListener("scroll", onScroll);
   }, [hideScrollHint, location.pathname]);
 
+  // ✅ Drawer가 열려 있을 때, 배경 스크롤/터치 스크롤 감각까지 더 확실히 잠그고 싶으면
+  // main overflow-hidden만으로도 충분한데, iOS에서 body 스크롤 튀는 경우 대비용.
+  // (부작용 최소화 위해 mobileOpen일 때만)
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const prev = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden text-white flex flex-col">
       {/* ===== 공통 배경 ===== */}
@@ -134,7 +147,14 @@ export function Layout() {
       {/* ===== 공통 헤더 ===== */}
       <header className="relative w-full shrink-0">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 py-4 lg:px-10">
-          <Link to="/" className="flex min-w-0 items-center gap-3">
+          <Link
+            to="/"
+            className="flex min-w-0 items-center gap-3"
+            onClick={() => {
+              // 로고 탭 시 drawer 닫기 (모바일에서 종종 유용)
+              setMobileOpen(false);
+            }}
+          >
             <img
               src={`${base}logo.png`}
               alt="로안생명공학연구소 로고"
@@ -159,10 +179,18 @@ export function Layout() {
             <Link to="/team" className="hover:text-white" onClick={handleNavClick("/team")}>
               연구진
             </Link>
-            <Link to="/services" className="hover:text-white" onClick={handleNavClick("/services")}>
+            <Link
+              to="/services"
+              className="hover:text-white"
+              onClick={handleNavClick("/services")}
+            >
               연구서비스
             </Link>
-            <Link to="/contact" className="hover:text-white" onClick={handleNavClick("/contact")}>
+            <Link
+              to="/contact"
+              className="hover:text-white"
+              onClick={handleNavClick("/contact")}
+            >
               문의하기
             </Link>
           </nav>
@@ -171,7 +199,7 @@ export function Layout() {
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-white/90 backdrop-blur-md transition hover:bg-white/10 md:hidden"
-            aria-label="메뉴 열기"
+            aria-label={mobileOpen ? "메뉴 닫기" : "메뉴 열기"}
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((v) => !v)}
           >
@@ -179,52 +207,131 @@ export function Layout() {
           </button>
         </div>
 
-        {/* 모바일 드롭다운 메뉴 */}
-        {mobileOpen && (
-          <div className="md:hidden">
-            <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10">
-              <div className="rounded-2xl border border-white/10 bg-black/60 p-4 backdrop-blur-md shadow-xl">
-                <nav className="flex flex-col gap-2 text-base text-white/90">
-                  <Link
-                    to="/"
-                    className="rounded-xl px-3 py-2 hover:bg-white/10"
-                    onClick={handleNavClick("/")}
-                  >
-                    홈
-                  </Link>
-                  <Link
-                    to="/about"
-                    className="rounded-xl px-3 py-2 hover:bg-white/10"
-                    onClick={handleNavClick("/about")}
-                  >
-                    연구소 소개
-                  </Link>
-                  <Link
-                    to="/team"
-                    className="rounded-xl px-3 py-2 hover:bg-white/10"
-                    onClick={handleNavClick("/team")}
-                  >
-                    연구진
-                  </Link>
-                  <Link
-                    to="/services"
-                    className="rounded-xl px-3 py-2 hover:bg-white/10"
-                    onClick={handleNavClick("/services")}
-                  >
-                    연구서비스
-                  </Link>
-                  <Link
-                    to="/contact"
-                    className="rounded-xl px-3 py-2 hover:bg-white/10"
-                    onClick={handleNavClick("/contact")}
-                  >
-                    문의하기
-                  </Link>
-                </nav>
+        {/* ===== Mobile Drawer (overlay + fixed panel) ===== */}
+        {/* ✅ 레이아웃을 밀지 않고 화면 위로 덮어서 나타남 */}
+        <div
+          className={[
+            "md:hidden",
+            "fixed inset-0 z-50",
+            // open일 때만 클릭/터치 가능
+            mobileOpen ? "pointer-events-auto" : "pointer-events-none",
+          ].join(" ")}
+          aria-hidden={!mobileOpen}
+        >
+          {/* Backdrop */}
+          <div
+            className={[
+              "absolute inset-0",
+              "bg-black/55 backdrop-blur-[2px]",
+              "transition-opacity duration-200 ease-out",
+              mobileOpen ? "opacity-100" : "opacity-0",
+            ].join(" ")}
+            onClick={() => setMobileOpen(false)}
+          />
+
+          {/* Panel */}
+          <aside
+            className={[
+              "absolute right-0 top-0 h-full w-[86%] max-w-[360px]",
+              "border-l border-white/10 bg-black/70 backdrop-blur-md shadow-2xl",
+              "transition-transform duration-250 ease-out",
+              mobileOpen ? "translate-x-0" : "translate-x-full",
+              // safe area 대응 느낌(아이폰 노치 등)
+              "pt-4 pb-6",
+            ].join(" ")}
+            role="dialog"
+            aria-modal="true"
+            aria-label="모바일 메뉴"
+            // 패널 내부 클릭은 backdrop 닫힘 방지
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer Header */}
+            <div className="px-4">
+              <div className="flex items-center justify-between">
+                <div className="flex min-w-0 items-center gap-3">
+                  <img
+                    src={`${base}logo.png`}
+                    alt="로안생명공학연구소 로고"
+                    className="h-9 w-auto object-contain"
+                    loading="eager"
+                    decoding="async"
+                  />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-white">
+                      로안생명공학연구소
+                    </div>
+                    <div className="truncate text-[11px] text-white/60">
+                      LoAn Bioengineering Research Institute
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-white/90 backdrop-blur-md transition hover:bg-white/10"
+                  aria-label="메뉴 닫기"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  ✕
+                </button>
               </div>
+
+              <div className="mt-4 h-px w-full bg-white/10" />
             </div>
-          </div>
-        )}
+
+            {/* Drawer Nav */}
+            <nav className="mt-3 flex flex-col gap-1 px-4 text-base text-white/90">
+              <Link
+                to="/"
+                className="rounded-2xl px-3 py-3 hover:bg-white/10 active:bg-white/10"
+                onClick={handleNavClick("/")}
+              >
+                홈
+              </Link>
+              <Link
+                to="/about"
+                className="rounded-2xl px-3 py-3 hover:bg-white/10 active:bg-white/10"
+                onClick={handleNavClick("/about")}
+              >
+                연구소 소개
+              </Link>
+              <Link
+                to="/team"
+                className="rounded-2xl px-3 py-3 hover:bg-white/10 active:bg-white/10"
+                onClick={handleNavClick("/team")}
+              >
+                연구진
+              </Link>
+              <Link
+                to="/services"
+                className="rounded-2xl px-3 py-3 hover:bg-white/10 active:bg-white/10"
+                onClick={handleNavClick("/services")}
+              >
+                연구서비스
+              </Link>
+              <Link
+                to="/contact"
+                className="rounded-2xl px-3 py-3 hover:bg-white/10 active:bg-white/10"
+                onClick={handleNavClick("/contact")}
+              >
+                문의하기
+              </Link>
+
+              <div className="mt-3 h-px w-full bg-white/10" />
+
+              {/* Optional: 작은 안내/연락 */}
+              <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+                <div className="text-xs text-white/70">
+                  연구 협업 및 문의는{" "}
+                  <span className="text-white/90">문의하기</span>를 이용해주세요.
+                </div>
+              </div>
+
+              {/* Safe bottom padding 느낌 */}
+              <div className="h-6" />
+            </nav>
+          </aside>
+        </div>
       </header>
 
       {/* ===== 본문 ===== */}
@@ -234,7 +341,12 @@ export function Layout() {
           "relative mx-auto w-full max-w-7xl flex-1 min-h-0",
           "px-4 sm:px-6 lg:px-10",
           // ✅ Home: 한 화면 고정 + footer-safe padding
-          isHome ? "pb-14 sm:pb-16 overflow-hidden" : "pb-12 sm:pb-16 overflow-y-auto",
+          // ✅ Drawer 열리면 main 스크롤 잠금
+          isHome
+            ? "pb-14 sm:pb-16 overflow-hidden"
+            : mobileOpen
+              ? "pb-12 sm:pb-16 overflow-hidden"
+              : "pb-12 sm:pb-16 overflow-y-auto",
         ].join(" ")}
       >
         {/* ✅ routeNonce로 같은 탭 클릭 시에도 Outlet이 "다시" 그려지게 */}

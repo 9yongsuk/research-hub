@@ -1,5 +1,5 @@
 // src/pages/Team.tsx
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { teamMembers } from "../content/team";
 import type { Person } from "../content/team";
 
@@ -113,7 +113,6 @@ function PersonCard({
       <RolePill role={person.role} />
 
       <div className="mt-2 font-extrabold text-white leading-snug">
-        {/* 모바일: 영문은 항상 아래 작은 글씨 */}
         <span className="block text-[16px]">{person.nameKo}</span>
         {person.nameEn && (
           <span className="block text-[12px] text-white/60 mt-0.5">
@@ -147,7 +146,6 @@ function MobileDisclosure({ person }: { person: Person }) {
   return (
     <div className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-4 backdrop-blur-md">
       <div className="grid gap-3">
-        {/* 핵심 섹션만 기본 노출 */}
         {person.education?.length && (
           <SectionBlock title="학력">
             <TimelineList items={person.education} />
@@ -172,11 +170,11 @@ function MobileDisclosure({ person }: { person: Person }) {
           </SectionBlock>
         )}
 
-        {/* 더보기 영역 */}
         {hasExtra && (
           <>
             {!expanded && (
               <button
+                type="button"
                 onClick={() => setExpanded(true)}
                 className="mt-2 text-sm text-sky-300 hover:text-sky-200"
               >
@@ -207,9 +205,7 @@ function MobileDisclosure({ person }: { person: Person }) {
                 {person.professionalEditorialService?.length && (
                   <SectionBlock title="Professional Editorial Service">
                     <BulletList
-                      items={person.professionalEditorialService.map(
-                        (x) => x.text
-                      )}
+                      items={person.professionalEditorialService.map((x) => x.text)}
                     />
                   </SectionBlock>
                 )}
@@ -217,38 +213,31 @@ function MobileDisclosure({ person }: { person: Person }) {
                 {person.professionalMemberships?.length && (
                   <SectionBlock title="Professional Memberships">
                     <BulletList
-                      items={person.professionalMemberships.map(
-                        (x) => x.text
-                      )}
+                      items={person.professionalMemberships.map((x) => x.text)}
                     />
                   </SectionBlock>
                 )}
 
                 {person.presentations?.length && (
                   <SectionBlock title="Presentations">
-                    <BulletList
-                      items={person.presentations.map((x) => x.text)}
-                    />
+                    <BulletList items={person.presentations.map((x) => x.text)} />
                   </SectionBlock>
                 )}
 
                 {person.editorials?.length && (
                   <SectionBlock title="Editorial / Membership">
-                    <BulletList
-                      items={person.editorials.map((x) => x.text)}
-                    />
+                    <BulletList items={person.editorials.map((x) => x.text)} />
                   </SectionBlock>
                 )}
 
                 {person.technicalSkills?.length && (
                   <SectionBlock title="Technical Skills">
-                    <BulletList
-                      items={person.technicalSkills.map((x) => x.text)}
-                    />
+                    <BulletList items={person.technicalSkills.map((x) => x.text)} />
                   </SectionBlock>
                 )}
 
                 <button
+                  type="button"
                   onClick={() => setExpanded(false)}
                   className="text-sm text-white/60 hover:text-white"
                 >
@@ -263,28 +252,133 @@ function MobileDisclosure({ person }: { person: Person }) {
   );
 }
 
+/* ---------- Desktop Detail Panel ---------- */
+
+function DesktopDetail({ person }: { person: Person }) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-black/25 p-6 backdrop-blur-md">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <RolePill role={person.role} />
+          <div className="mt-3">
+            <div className="text-2xl font-extrabold text-white leading-tight">
+              {person.nameKo}
+            </div>
+            {person.nameEn && (
+              <div className="mt-1 text-sm text-white/60">{person.nameEn}</div>
+            )}
+            <div className="mt-3 text-[14px] text-white/80 leading-relaxed">
+              {person.titleLine}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4">
+        {person.education?.length && (
+          <SectionBlock title="학력">
+            <TimelineList items={person.education} />
+          </SectionBlock>
+        )}
+
+        {person.experience?.length && (
+          <SectionBlock title="경력">
+            <TimelineList items={person.experience} />
+          </SectionBlock>
+        )}
+
+        {person.interests?.length && (
+          <SectionBlock title="연구 분야">
+            <TagList items={person.interests} />
+          </SectionBlock>
+        )}
+
+        {person.publications?.length && (
+          <SectionBlock title="주요 논문">
+            <BulletList items={person.publications.map((x) => x.text)} />
+          </SectionBlock>
+        )}
+
+        {person.grants?.length && (
+          <SectionBlock title="연구비 수주">
+            <BulletList items={person.grants.map((x) => x.text)} />
+          </SectionBlock>
+        )}
+
+        {person.awards?.length && (
+          <SectionBlock title="수상 실적">
+            <BulletList items={person.awards.map((x) => x.text)} />
+          </SectionBlock>
+        )}
+
+        {person.scholarships?.length && (
+          <SectionBlock title="장학금">
+            <BulletList items={person.scholarships.map((x) => x.text)} />
+          </SectionBlock>
+        )}
+
+        {person.professionalEditorialService?.length && (
+          <SectionBlock title="Professional Editorial Service">
+            <BulletList items={person.professionalEditorialService.map((x) => x.text)} />
+          </SectionBlock>
+        )}
+
+        {person.professionalMemberships?.length && (
+          <SectionBlock title="Professional Memberships">
+            <BulletList items={person.professionalMemberships.map((x) => x.text)} />
+          </SectionBlock>
+        )}
+
+        {person.presentations?.length && (
+          <SectionBlock title="Presentations">
+            <BulletList items={person.presentations.map((x) => x.text)} />
+          </SectionBlock>
+        )}
+
+        {person.editorials?.length && (
+          <SectionBlock title="Editorial / Membership">
+            <BulletList items={person.editorials.map((x) => x.text)} />
+          </SectionBlock>
+        )}
+
+        {person.technicalSkills?.length && (
+          <SectionBlock title="Technical Skills">
+            <BulletList items={person.technicalSkills.map((x) => x.text)} />
+          </SectionBlock>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ---------- Main ---------- */
 
 export default function Team() {
-  const [activeId, setActiveId] = useState<string>("");
+  // ✅ 초기값이 ""이면 처음 들어왔을 때 아무도 선택 안 되어 보일 수 있음
+  // 데스크탑 UX에선 첫 번째 멤버를 기본 선택으로 두는 게 자연스럽습니다.
+  const defaultId = teamMembers[0]?.id ?? "";
+  const [activeId, setActiveId] = useState<string>(defaultId);
+
+  const activePerson = useMemo(
+    () => teamMembers.find((p) => p.id === activeId) ?? teamMembers[0],
+    [activeId]
+  );
 
   return (
     <div className="py-6">
       <div className="rounded-3xl border border-white/10 bg-black/25 p-5 backdrop-blur-md">
         <div>
-          <div className="text-[11px] tracking-[0.3em] text-sky-300">
-            TEAM
-          </div>
+          <div className="text-[11px] tracking-[0.3em] text-sky-300">TEAM</div>
           <h1 className="mt-2 font-extrabold text-[clamp(22px,6vw,30px)]">
             연구진 소개
           </h1>
           <p className="mt-3 text-[13px] text-white/75 leading-[1.65]">
-            한의학과 생명과학 기반 연구를 연결하는 융합형 연구진과
-            임상 전문가가 함께합니다.
+            한의학과 생명과학 기반 연구를 연결하는 융합형 연구진과 임상 전문가가
+            함께합니다.
           </p>
         </div>
 
-        {/* 모바일: 순서대로 아코디언 */}
+        {/* ===== Mobile: 아코디언 ===== */}
         <div className="mt-6 space-y-4 lg:hidden">
           {teamMembers.map((p) => {
             const open = p.id === activeId;
@@ -293,9 +387,7 @@ export default function Team() {
                 <PersonCard
                   person={p}
                   isActive={open}
-                  onClick={() =>
-                    setActiveId(open ? "" : p.id)
-                  }
+                  onClick={() => setActiveId(open ? "" : p.id)}
                 />
                 {open && <MobileDisclosure person={p} />}
               </div>
@@ -303,7 +395,64 @@ export default function Team() {
           })}
         </div>
 
-        {/* 데스크탑은 기존 패턴 유지 가능 */}
+        {/* ===== Desktop: 좌측 리스트 + 우측 상세 ===== */}
+        <div className="mt-6 hidden lg:grid lg:grid-cols-12 lg:gap-6">
+          {/* Left List */}
+          <div className="lg:col-span-4 xl:col-span-3">
+            <div className="space-y-3">
+              {teamMembers.map((p) => {
+                const active = p.id === activeId;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setActiveId(p.id)}
+                    className={[
+                      "w-full text-left rounded-2xl border p-4 transition-all duration-200",
+                      "bg-black/35 backdrop-blur-md",
+                      active
+                        ? "border-sky-400 shadow-xl"
+                        : "border-white/10 hover:bg-black/45",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-[13px] font-extrabold text-white truncate">
+                          {p.nameKo}
+                        </div>
+                        {p.nameEn && (
+                          <div className="mt-0.5 text-[11px] text-white/55 truncate">
+                            {p.nameEn}
+                          </div>
+                        )}
+                        <div className="mt-2 text-[12px] text-white/70 line-clamp-2">
+                          {p.titleLine}
+                        </div>
+                      </div>
+                      <div className="shrink-0">
+                        <RolePill role={p.role} />
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Detail */}
+          <div className="lg:col-span-8 xl:col-span-9">
+            {activePerson ? (
+              <DesktopDetail person={activePerson} />
+            ) : (
+              <div className="rounded-3xl border border-white/10 bg-black/25 p-6 backdrop-blur-md">
+                <div className="text-white/70 text-sm">
+                  연구진을 선택하면 상세 정보가 표시됩니다.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   );
