@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import emailjs from "@emailjs/browser";
 import { Link } from "react-router-dom";
 
@@ -19,6 +19,17 @@ type FormState = {
   consent: boolean;
 };
 
+type Status = "idle" | "sending" | "success" | "error";
+
+function isTouchDevice() {
+  return (
+    typeof window !== "undefined" &&
+    ("ontouchstart" in window ||
+      (navigator as any)?.maxTouchPoints > 0 ||
+      (navigator as any)?.msMaxTouchPoints > 0)
+  );
+}
+
 export default function Contact() {
   const [form, setForm] = useState<FormState>({
     name: "",
@@ -32,10 +43,20 @@ export default function Contact() {
   // ✅ “제출 시도” 이후에만 부족 항목 안내가 보이도록
   const [touched, setTouched] = useState(false);
 
-  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
+
+  // ✅ Sticky toast 닫기 제어 (사용자가 닫으면 status 유지/초기화는 선택)
+  const [toastHidden, setToastHidden] = useState(false);
+
+  // ✅ refs (모바일 Next → 다음 필드로 이동)
+  const nameRef = useRef<HTMLInputElement | null>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const orgRef = useRef<HTMLInputElement | null>(null);
+  const subjectRef = useRef<HTMLInputElement | null>(null);
+  const messageRef = useRef<HTMLTextAreaElement | null>(null);
+  const consentRef = useRef<HTMLInputElement | null>(null);
+  const submitRef = useRef<HTMLButtonElement | null>(null);
 
   // ✅ 부족한 항목 리스트 계산
   const errors = useMemo(() => {
@@ -57,6 +78,41 @@ export default function Contact() {
 
   const isValid = errors.length === 0;
 
+  const baseInput =
+    "mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none " +
+    "focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 text-[15px] leading-6";
+
+  const focusAndScroll = (el: HTMLElement | null) => {
+    if (!el) return;
+    // focus 먼저
+    (el as any).focus?.();
+
+    // 모바일에서 키보드 올라오면 레이아웃 바뀌므로, 살짝 딜레이 후 스크롤
+    window.setTimeout(() => {
+      try {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch {
+        // 구형 브라우저 fallback
+        el.scrollIntoView();
+      }
+    }, 60);
+  };
+
+  const focusFirstError = () => {
+    // errors는 문구 리스트라서, 실제 필드 기준으로 검사해 포커스
+    const nameBad = form.name.trim().length < 2;
+    const emailBad = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+    const subjectBad = form.subject.trim().length < 2;
+    const messageBad = form.message.trim().length < 10;
+    const consentBad = !form.consent;
+
+    if (nameBad) return focusAndScroll(nameRef.current);
+    if (emailBad) return focusAndScroll(emailRef.current);
+    if (subjectBad) return focusAndScroll(subjectRef.current);
+    if (messageBad) return focusAndScroll(messageRef.current);
+    if (consentBad) return focusAndScroll(consentRef.current);
+  };
+
   const onChange =
     (key: keyof FormState) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -70,6 +126,9 @@ export default function Contact() {
       // 입력을 시작하면 status 메시지가 고정되지 않게
       if (status === "success" || status === "error") setStatus("idle");
       if (errorMsg) setErrorMsg("");
+
+      // 토스트 다시 보이게
+      if (toastHidden) setToastHidden(false);
     };
 
   const reset = () => {
@@ -83,16 +142,34 @@ export default function Contact() {
     });
   };
 
+  // ✅ Enter(Next) 동작: input에서는 Enter를 "다음 필드로"
+  // textarea는 Enter=줄바꿈이 자연스러우므로 기본 유지.
+  const onKeyDownNext =
+    (nextEl: HTMLElement | null) =>
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key !== "Enter") return;
+      // IME 조합 중 Enter는 무시
+      if ((e.nativeEvent as any).isComposing) return;
+
+      e.preventDefault();
+      focusAndScroll(nextEl);
+    };
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setTouched(true);
     setErrorMsg("");
+    setToastHidden(false);
 
     // ✅ 전송 중 중복 클릭 방지
     if (status === "sending") return;
 
-    // ✅ 유효하지 않으면, 문구만 표시하고 종료 (버튼은 눌리게 유지)
-    if (!isValid) return;
+    // ✅ 유효하지 않으면, 문구만 표시하고 (첫 오류로 포커스 이동)
+    if (!isValid) {
+      focusFirstError();
+      return;
+    }
 
     try {
       setStatus("sending");
@@ -107,7 +184,6 @@ export default function Contact() {
         );
       }
 
-      // ✅ EmailJS 템플릿 변수명과 일치
       const params: Record<string, string> = {
         from_name: form.name.trim(),
         from_email: form.email.trim(),
@@ -120,27 +196,82 @@ export default function Contact() {
       await emailjs.send(serviceId, templateId, params, { publicKey });
 
       setStatus("success");
+      setToastHidden(false);
       reset();
       setTouched(false);
+
+      // ✅ 성공 시 상단 토스트가 잘 보이게 맨 위로 살짝 올림
+      window.setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 80);
+
+      // ✅ 입력 다시 시작하기 쉽게 첫 칸으로 포커스
+      window.setTimeout(() => {
+        focusAndScroll(nameRef.current);
+      }, 250);
+
       setTimeout(() => setStatus("idle"), 3000);
     } catch (err: any) {
       setStatus("error");
+      setToastHidden(false);
       setErrorMsg(
         err?.message ||
           "메일 전송에 실패했습니다. 잠시 후 다시 시도하거나 직접 이메일로 문의해주세요."
       );
+
+      window.setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 80);
+
       setTimeout(() => setStatus("idle"), 4000);
     }
   };
 
-  const baseInput =
-    "mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none " +
-    "focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 " +
-    "text-[15px] leading-6"; // 모바일 가독성용
+  const showToast = !toastHidden && (status === "success" || status === "error");
 
   return (
     <div className="relative min-h-screen text-white px-4 sm:px-6 py-10 sm:py-16">
       <div className="max-w-7xl mx-auto">
+        {/* ✅ Sticky Toast (상단 고정) */}
+        <div className="sticky top-3 z-50">
+          {showToast && (
+            <div
+              className={`
+                mx-auto mb-5
+                rounded-2xl border
+                px-4 py-3
+                shadow-[0_18px_60px_rgba(0,0,0,0.55)]
+                backdrop-blur-xl
+                ${
+                  status === "success"
+                    ? "border-cyan-400/30 bg-cyan-500/10 text-cyan-200"
+                    : "border-red-400/30 bg-red-500/10 text-red-200"
+                }
+              `}
+              role="status"
+              aria-live="polite"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="text-sm leading-6">
+                  {status === "success" ? (
+                    <span>전송 완료! 확인 후 회신드리겠습니다.</span>
+                  ) : (
+                    <span>전송 실패: {errorMsg}</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setToastHidden(true)}
+                  className="shrink-0 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/80 hover:bg-white/10"
+                  aria-label="알림 닫기"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Header */}
         <div className="mb-8 sm:mb-12">
           <div className="text-[11px] sm:text-sm tracking-[0.25em] text-cyan-400 mb-3">
@@ -182,8 +313,10 @@ export default function Contact() {
                 <div>
                   <label className="text-xs sm:text-sm text-white/70">이름 *</label>
                   <input
+                    ref={nameRef}
                     value={form.name}
                     onChange={onChange("name")}
+                    onKeyDown={onKeyDownNext(emailRef.current)}
                     autoComplete="name"
                     inputMode="text"
                     enterKeyHint="next"
@@ -198,11 +331,13 @@ export default function Contact() {
                 <div>
                   <label className="text-xs sm:text-sm text-white/70">이메일 *</label>
                   <input
+                    ref={emailRef}
                     type="email"
                     inputMode="email"
                     autoComplete="email"
                     value={form.email}
                     onChange={onChange("email")}
+                    onKeyDown={onKeyDownNext(orgRef.current)}
                     enterKeyHint="next"
                     autoCapitalize="none"
                     autoCorrect="off"
@@ -217,8 +352,10 @@ export default function Contact() {
                 <div>
                   <label className="text-xs sm:text-sm text-white/70">기관/회사</label>
                   <input
+                    ref={orgRef}
                     value={form.org}
                     onChange={onChange("org")}
+                    onKeyDown={onKeyDownNext(subjectRef.current)}
                     autoComplete="organization"
                     inputMode="text"
                     enterKeyHint="next"
@@ -233,8 +370,10 @@ export default function Contact() {
                 <div>
                   <label className="text-xs sm:text-sm text-white/70">제목 *</label>
                   <input
+                    ref={subjectRef}
                     value={form.subject}
                     onChange={onChange("subject")}
+                    onKeyDown={onKeyDownNext(messageRef.current)}
                     inputMode="text"
                     enterKeyHint="next"
                     autoCapitalize="sentences"
@@ -249,24 +388,44 @@ export default function Contact() {
               <div>
                 <label className="text-xs sm:text-sm text-white/70">문의 내용 *</label>
                 <textarea
+                  ref={messageRef}
                   value={form.message}
                   onChange={onChange("message")}
                   rows={6}
-                  className={
-                    baseInput +
-                    " resize-none min-h-[160px] sm:min-h-[190px]"
-                  }
+                  className={baseInput + " resize-none min-h-[160px] sm:min-h-[190px]"}
                   placeholder="프로젝트 배경, 목표, 원하는 산출물, 일정/예산 범위 등을 적어주시면 더 빠르게 상담 가능합니다."
                 />
                 <div className="mt-2 text-[11px] sm:text-xs text-white/50">
                   * 최소 10자 이상 입력 권장
                 </div>
+
+                {/* ✅ 메시지 입력 끝나면 '다음' 흐름을 만들고 싶으면:
+                    - textarea 아래에 '다음' 버튼을 노출(모바일에서만) */}
+                {isTouchDevice() && (
+                  <button
+                    type="button"
+                    onClick={() => focusAndScroll(consentRef.current)}
+                    className="
+                      mt-3 w-full
+                      min-h-[44px]
+                      rounded-2xl
+                      border border-white/10
+                      bg-white/5
+                      text-sm font-semibold text-white/80
+                      hover:bg-white/10
+                      transition-all
+                    "
+                  >
+                    다음 (동의 체크로 이동)
+                  </button>
+                )}
               </div>
 
               {/* Consent */}
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                 <div className="flex items-start gap-3">
                   <input
+                    ref={consentRef}
                     id="consent"
                     type="checkbox"
                     checked={form.consent}
@@ -288,8 +447,9 @@ export default function Contact() {
               {/* Actions */}
               <div className="pt-2 sm:pt-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  {/* Submit (disabled를 쓰지 않고, 눌렀을 때 안내문구 표시) */}
+                  {/* Submit */}
                   <button
+                    ref={submitRef}
                     type="submit"
                     aria-disabled={!isValid || status === "sending"}
                     className={`
@@ -352,7 +512,7 @@ export default function Contact() {
                   </a>
                 </div>
 
-                {/* 부족 항목 안내 (제출 시도 후에만) */}
+                {/* 부족 항목 안내 */}
                 {touched && errors.length > 0 && (
                   <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                     <div className="text-xs font-semibold text-white/70 mb-2">
@@ -366,22 +526,28 @@ export default function Contact() {
                         </li>
                       ))}
                     </ul>
+
+                    {/* ✅ 모바일 편의: 첫 오류로 이동 버튼 */}
+                    {isTouchDevice() && (
+                      <button
+                        type="button"
+                        onClick={focusFirstError}
+                        className="
+                          mt-3 w-full
+                          min-h-[44px]
+                          rounded-2xl
+                          border border-white/10
+                          bg-white/5
+                          text-sm font-semibold text-white/80
+                          hover:bg-white/10
+                          transition-all
+                        "
+                      >
+                        첫 오류로 이동
+                      </button>
+                    )}
                   </div>
                 )}
-
-                {/* Status */}
-                <div className="pt-3">
-                  {status === "success" && (
-                    <div className="rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-200">
-                      전송 완료! 확인 후 회신드리겠습니다.
-                    </div>
-                  )}
-                  {status === "error" && (
-                    <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-                      전송 실패: {errorMsg}
-                    </div>
-                  )}
-                </div>
               </div>
             </form>
           </div>
