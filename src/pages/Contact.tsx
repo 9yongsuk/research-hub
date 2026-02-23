@@ -445,7 +445,7 @@ export default function Contact() {
         </div>
 
         <div className="mt-12 text-center text-xs text-white/50">
-          © {new Date().getFullYear()} LoAn Bioengineering Research Institute
+          © {new Date().getFullYear()} Roan Bioengineering Research Center
         </div>
       </div>
     </div>
