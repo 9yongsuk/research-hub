@@ -10,12 +10,10 @@ export function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
-  // 라우트 바뀌면 모바일 메뉴 자동 닫기
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
 
-  // 모바일 메뉴 열렸을 때 스크롤 잠금 (배경 스크롤 방지)
   useEffect(() => {
     if (!menuOpen) return;
     const prev = document.body.style.overflow;
@@ -36,28 +34,23 @@ export function Layout() {
     []
   );
 
+  // ✅ Home일 때만 상단 여백 제거
+  const isHome = location.pathname === "/";
+
   return (
     <div className="min-h-dvh w-full">
-      {/* ===== Background layer (원래 비디오/배경이 있다면 여기와 겹치게 구성해도 됨) ===== */}
+      {/* Background */}
       <div className="pointer-events-none fixed inset-0 -z-10">
-        {/* 은은한 그라데이션/비네트: 비디오 배경에서도 텍스트 가독성 확보 */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/70" />
         <div className="absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_20%,black,transparent)] bg-white/10" />
       </div>
 
-      {/* ===== Header ===== */}
+      {/* Header */}
       <header className="sticky top-0 z-40">
-        {/* 상단 바: 모바일 높이 줄이고, 배경 위 가독성 확보 */}
         <div className="backdrop-blur-md bg-black/35 border-b border-white/10">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="h-14 sm:h-16 flex items-center justify-between gap-3">
-              {/* Logo */}
-              <NavLink
-                to="/"
-                className="flex items-center gap-2 min-w-0"
-                aria-label="Go to Home"
-              >
-                {/* 로고 이미지로 바꾸고 싶으면 아래 span 대신 img 넣으면 됨 */}
+              <NavLink to="/" className="flex items-center gap-2 min-w-0" aria-label="Go to Home">
                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/15">
                   <span className="text-white font-extrabold text-sm">L</span>
                 </span>
@@ -72,7 +65,6 @@ export function Layout() {
                 </div>
               </NavLink>
 
-              {/* Desktop Nav */}
               <nav className="hidden md:flex items-center gap-1">
                 {navItems.map((item) => (
                   <NavLink
@@ -92,7 +84,6 @@ export function Layout() {
                 ))}
               </nav>
 
-              {/* Mobile Menu Button */}
               <button
                 type="button"
                 className={cn(
@@ -105,14 +96,7 @@ export function Layout() {
                 aria-label="Open menu"
                 aria-expanded={menuOpen}
               >
-                {/* simple icon */}
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="opacity-90"
-                >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="opacity-90">
                   <path
                     d="M4 7H20M4 12H20M4 17H20"
                     stroke="currentColor"
@@ -125,17 +109,14 @@ export function Layout() {
           </div>
         </div>
 
-        {/* Mobile menu overlay */}
         {menuOpen && (
           <div className="md:hidden">
-            {/* 오버레이 */}
             <button
               type="button"
               className="fixed inset-0 z-40 bg-black/55"
               aria-label="Close menu overlay"
               onClick={() => setMenuOpen(false)}
             />
-            {/* 메뉴 패널 */}
             <div className="fixed top-14 left-0 right-0 z-50">
               <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
                 <div className="rounded-2xl border border-white/12 bg-black/75 backdrop-blur-md shadow-xl overflow-hidden">
@@ -172,27 +153,34 @@ export function Layout() {
         )}
       </header>
 
-      {/* ===== Main =====
-          - 헤더 높이 + 모바일 패딩 고려해서 컨텐츠가 과하게 아래로 밀리지 않게
-          - Home 처럼 "hero" 컨텐츠가 있는 페이지는 여기 padding이 중요
-      */}
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* 모바일에서 위 여백을 과하게 주지 않기 */}
-        <div className="pt-6 sm:pt-10 pb-10 sm:pb-14">
+      {/* ✅ Main: 헤더 높이를 CSS 변수로 제공 + Home만 pt 제거 */}
+      <main
+        className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"
+        style={
+          {
+            // 헤더: 모바일 56px(h-14), sm 이상 64px(h-16)
+            "--header-h": "56px",
+          } as React.CSSProperties
+        }
+      >
+        <div
+          className={cn(
+            // Home은 hero가 자체적으로 정렬/높이를 먹으므로 pt를 0
+            isHome ? "pt-0" : "pt-6 sm:pt-10",
+            "pb-10 sm:pb-14"
+          )}
+        >
           <Outlet />
         </div>
       </main>
 
-      {/* ===== Footer (선택) ===== */}
       <footer className="border-t border-white/10 bg-black/20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="text-white/55 text-xs">
               © {new Date().getFullYear()} LoAn Bioengineering Research Institute
             </div>
-            <div className="text-white/45 text-xs">
-              Daejeon · Korea
-            </div>
+            <div className="text-white/45 text-xs">Daejeon · Korea</div>
           </div>
         </div>
       </footer>
