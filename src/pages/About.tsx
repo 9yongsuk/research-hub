@@ -36,7 +36,7 @@ export default function About() {
         {/* 오른쪽 이미지 */}
         <div className="relative overflow-hidden rounded-3xl border border-white/10">
           <img
-            src={`${base}about-hero.jpg`}
+            src={`${base}about-hero.webp`}
             alt="연구소 이미지"
             className="h-[420px] w-full object-cover"
           />
