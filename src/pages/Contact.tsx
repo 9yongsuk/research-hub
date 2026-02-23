@@ -1,11 +1,11 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import emailjs from "@emailjs/browser";
 import { Link } from "react-router-dom";
 
 const RECEIVER_EMAIL = "Roanresearchcenter@gmail.com";
 
 const Badge = ({ children }: any) => (
-  <span className="inline-flex items-center rounded-full border border-white/20 bg-white/5 backdrop-blur px-3 py-1 text-[11px] sm:text-xs text-white/80">
+  <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 backdrop-blur px-3 py-1 text-[11px] sm:text-xs text-white/75">
     {children}
   </span>
 );
@@ -31,6 +31,14 @@ function isTouchDevice() {
 }
 
 export default function Contact() {
+  // ----- spacing system (통일 규칙) -----
+  const pageX = "px-4 sm:px-6";
+  const pageY = "py-6 sm:py-12";
+  const sectionGap = "mt-8 sm:mt-10";
+  const card =
+    "rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_25px_70px_rgba(0,0,0,0.55)]";
+  const cardPad = "p-5 sm:p-8 md:p-10";
+
   const [form, setForm] = useState<FormState>({
     name: "",
     email: "",
@@ -40,16 +48,12 @@ export default function Contact() {
     consent: false,
   });
 
-  // ✅ “제출 시도” 이후에만 부족 항목 안내가 보이도록
   const [touched, setTouched] = useState(false);
-
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
 
-  // ✅ Sticky toast 닫기 제어 (사용자가 닫으면 status 유지/초기화는 선택)
   const [toastHidden, setToastHidden] = useState(false);
 
-  // ✅ refs (모바일 Next → 다음 필드로 이동)
   const nameRef = useRef<HTMLInputElement | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const orgRef = useRef<HTMLInputElement | null>(null);
@@ -58,7 +62,6 @@ export default function Contact() {
   const consentRef = useRef<HTMLInputElement | null>(null);
   const submitRef = useRef<HTMLButtonElement | null>(null);
 
-  // ✅ 부족한 항목 리스트 계산
   const errors = useMemo(() => {
     const list: string[] = [];
 
@@ -78,28 +81,25 @@ export default function Contact() {
 
   const isValid = errors.length === 0;
 
+  // 입력 베이스 (모바일에서 과한 패딩/폰트 방지 + 일관성)
   const baseInput =
-    "mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-white outline-none " +
-    "focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20 text-[15px] leading-6";
+    "mt-2 w-full rounded-2xl border border-white/10 bg-black/30 px-4 py-3 " +
+    "text-white outline-none text-[15px] leading-6 " +
+    "focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20";
 
   const focusAndScroll = (el: HTMLElement | null) => {
     if (!el) return;
-    // focus 먼저
     (el as any).focus?.();
-
-    // 모바일에서 키보드 올라오면 레이아웃 바뀌므로, 살짝 딜레이 후 스크롤
     window.setTimeout(() => {
       try {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
       } catch {
-        // 구형 브라우저 fallback
         el.scrollIntoView();
       }
     }, 60);
   };
 
   const focusFirstError = () => {
-    // errors는 문구 리스트라서, 실제 필드 기준으로 검사해 포커스
     const nameBad = form.name.trim().length < 2;
     const emailBad = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
     const subjectBad = form.subject.trim().length < 2;
@@ -123,11 +123,8 @@ export default function Contact() {
 
       setForm((prev) => ({ ...prev, [key]: value as any }));
 
-      // 입력을 시작하면 status 메시지가 고정되지 않게
       if (status === "success" || status === "error") setStatus("idle");
       if (errorMsg) setErrorMsg("");
-
-      // 토스트 다시 보이게
       if (toastHidden) setToastHidden(false);
     };
 
@@ -142,15 +139,11 @@ export default function Contact() {
     });
   };
 
-  // ✅ Enter(Next) 동작: input에서는 Enter를 "다음 필드로"
-  // textarea는 Enter=줄바꿈이 자연스러우므로 기본 유지.
   const onKeyDownNext =
     (nextEl: HTMLElement | null) =>
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key !== "Enter") return;
-      // IME 조합 중 Enter는 무시
       if ((e.nativeEvent as any).isComposing) return;
-
       e.preventDefault();
       focusAndScroll(nextEl);
     };
@@ -162,10 +155,8 @@ export default function Contact() {
     setErrorMsg("");
     setToastHidden(false);
 
-    // ✅ 전송 중 중복 클릭 방지
     if (status === "sending") return;
 
-    // ✅ 유효하지 않으면, 문구만 표시하고 (첫 오류로 포커스 이동)
     if (!isValid) {
       focusFirstError();
       return;
@@ -200,12 +191,10 @@ export default function Contact() {
       reset();
       setTouched(false);
 
-      // ✅ 성공 시 상단 토스트가 잘 보이게 맨 위로 살짝 올림
       window.setTimeout(() => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }, 80);
 
-      // ✅ 입력 다시 시작하기 쉽게 첫 칸으로 포커스
       window.setTimeout(() => {
         focusAndScroll(nameRef.current);
       }, 250);
@@ -229,15 +218,19 @@ export default function Contact() {
 
   const showToast = !toastHidden && (status === "success" || status === "error");
 
+  // 모바일: 토스트가 헤더 sticky(높이 56px~)와 겹치지 않게 offset
+  // Layout에서 header가 sticky라면 top-16이 안정적
+  const toastTop = "top-16 sm:top-3";
+
   return (
-    <div className="relative min-h-screen text-white px-4 sm:px-6 py-10 sm:py-16">
-      <div className="max-w-7xl mx-auto">
-        {/* ✅ Sticky Toast (상단 고정) */}
-        <div className="sticky top-3 z-50">
+    <div className={`relative min-h-dvh text-white ${pageX} ${pageY}`}>
+      <div className="max-w-6xl mx-auto">
+        {/* ✅ Sticky Toast */}
+        <div className={`sticky ${toastTop} z-50`}>
           {showToast && (
             <div
               className={`
-                mx-auto mb-5
+                mx-auto mb-4
                 rounded-2xl border
                 px-4 py-3
                 shadow-[0_18px_60px_rgba(0,0,0,0.55)]
@@ -252,7 +245,7 @@ export default function Contact() {
               aria-live="polite"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="text-sm leading-6">
+                <div className="text-[13px] sm:text-sm leading-6">
                   {status === "success" ? (
                     <span>전송 완료! 확인 후 회신드리겠습니다.</span>
                   ) : (
@@ -262,7 +255,7 @@ export default function Contact() {
                 <button
                   type="button"
                   onClick={() => setToastHidden(true)}
-                  className="shrink-0 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/80 hover:bg-white/10"
+                  className="shrink-0 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] sm:text-xs text-white/80 hover:bg-white/10"
                   aria-label="알림 닫기"
                 >
                   닫기
@@ -273,45 +266,41 @@ export default function Contact() {
         </div>
 
         {/* Header */}
-        <div className="mb-8 sm:mb-12">
-          <div className="text-[11px] sm:text-sm tracking-[0.25em] text-cyan-400 mb-3">
+        <header className="mb-6 sm:mb-10">
+          <div className="text-[11px] sm:text-sm tracking-[0.25em] text-cyan-300 mb-2 sm:mb-3">
             CONTACT
           </div>
-          <h1 className="text-3xl sm:text-5xl font-semibold mb-4 sm:mb-6">
+
+          <h1 className="font-semibold text-white leading-[1.15] tracking-[-0.01em] text-[clamp(22px,6vw,34px)] sm:text-5xl">
             문의하기
           </h1>
-          <p className="text-white/70 max-w-2xl text-sm sm:text-base leading-6 sm:leading-7">
+
+          <p className="mt-3 text-white/70 max-w-2xl text-[13px] sm:text-base leading-[1.65] sm:leading-7">
             연구 협업, 과제 기획, 분석/검증 의뢰 등 어떤 내용이든 편하게 남겨주세요.
             확인 후 회신드리겠습니다.
           </p>
-          <div className="mt-4 sm:mt-5 flex flex-wrap gap-2">
+
+          <div className="mt-4 flex flex-wrap gap-2">
             <Badge>1–2영업일 내 회신</Badge>
             <Badge>비공개 상담</Badge>
             <Badge>R&amp;D / Grant / Translational</Badge>
           </div>
-        </div>
+        </header>
 
         {/* Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-10 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8 lg:gap-10">
           {/* Form */}
-          <div
-            className="
-              lg:col-span-2
-              relative z-10
-              rounded-3xl border border-white/10
-              bg-white/5 backdrop-blur-xl
-              p-5 sm:p-8 md:p-10
-              shadow-[0_25px_70px_rgba(0,0,0,0.55)]
-            "
-          >
-            <h2 className="text-xl sm:text-2xl font-semibold mb-5 sm:mb-6">
+          <div className={`lg:col-span-2 relative z-10 ${card} ${cardPad}`}>
+            <h2 className="text-[18px] sm:text-2xl font-semibold mb-4 sm:mb-6">
               문의 내용
             </h2>
 
             <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 <div>
-                  <label className="text-xs sm:text-sm text-white/70">이름 *</label>
+                  <label className="text-[11px] sm:text-sm text-white/70">
+                    이름 *
+                  </label>
                   <input
                     ref={nameRef}
                     value={form.name}
@@ -329,7 +318,9 @@ export default function Contact() {
                 </div>
 
                 <div>
-                  <label className="text-xs sm:text-sm text-white/70">이메일 *</label>
+                  <label className="text-[11px] sm:text-sm text-white/70">
+                    이메일 *
+                  </label>
                   <input
                     ref={emailRef}
                     type="email"
@@ -350,7 +341,9 @@ export default function Contact() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 <div>
-                  <label className="text-xs sm:text-sm text-white/70">기관/회사</label>
+                  <label className="text-[11px] sm:text-sm text-white/70">
+                    기관/회사
+                  </label>
                   <input
                     ref={orgRef}
                     value={form.org}
@@ -368,7 +361,9 @@ export default function Contact() {
                 </div>
 
                 <div>
-                  <label className="text-xs sm:text-sm text-white/70">제목 *</label>
+                  <label className="text-[11px] sm:text-sm text-white/70">
+                    제목 *
+                  </label>
                   <input
                     ref={subjectRef}
                     value={form.subject}
@@ -386,21 +381,21 @@ export default function Contact() {
               </div>
 
               <div>
-                <label className="text-xs sm:text-sm text-white/70">문의 내용 *</label>
+                <label className="text-[11px] sm:text-sm text-white/70">
+                  문의 내용 *
+                </label>
                 <textarea
                   ref={messageRef}
                   value={form.message}
                   onChange={onChange("message")}
                   rows={6}
-                  className={baseInput + " resize-none min-h-[160px] sm:min-h-[190px]"}
+                  className={baseInput + " resize-none min-h-[150px] sm:min-h-[190px]"}
                   placeholder="프로젝트 배경, 목표, 원하는 산출물, 일정/예산 범위 등을 적어주시면 더 빠르게 상담 가능합니다."
                 />
                 <div className="mt-2 text-[11px] sm:text-xs text-white/50">
                   * 최소 10자 이상 입력 권장
                 </div>
 
-                {/* ✅ 메시지 입력 끝나면 '다음' 흐름을 만들고 싶으면:
-                    - textarea 아래에 '다음' 버튼을 노출(모바일에서만) */}
                 {isTouchDevice() && (
                   <button
                     type="button"
@@ -413,7 +408,7 @@ export default function Contact() {
                       bg-white/5
                       text-sm font-semibold text-white/80
                       hover:bg-white/10
-                      transition-all
+                      transition
                     "
                   >
                     다음 (동의 체크로 이동)
@@ -433,9 +428,9 @@ export default function Contact() {
                     className="mt-1 h-5 w-5 rounded border-white/20 bg-black/30"
                   />
                   <label htmlFor="consent" className="cursor-pointer select-none">
-                    <div className="text-sm text-white/80 leading-6">
+                    <div className="text-[13px] sm:text-sm text-white/80 leading-6">
                       문의 응대를 위해 이름/이메일을 수집·이용하는 것에 동의합니다. *
-                      <div className="text-xs text-white/50 mt-1 leading-5">
+                      <div className="text-[11px] sm:text-xs text-white/50 mt-1 leading-5">
                         (수집 항목: 이름, 이메일, 소속(선택), 문의 내용 / 보관: 회신 완료 후
                         합리적 기간 내 파기)
                       </div>
@@ -445,15 +440,13 @@ export default function Contact() {
               </div>
 
               {/* Actions */}
-              <div className="pt-2 sm:pt-4">
+              <div className="pt-1 sm:pt-3">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  {/* Submit */}
                   <button
                     ref={submitRef}
                     type="submit"
-                    aria-disabled={!isValid || status === "sending"}
+                    disabled={!isValid || status === "sending"}
                     className={`
-                      relative z-10
                       inline-flex items-center justify-center gap-2
                       w-full sm:w-auto
                       min-h-[46px]
@@ -466,17 +459,13 @@ export default function Contact() {
                       ${
                         !isValid || status === "sending"
                           ? `
-                            bg-white/5 border-white/10
-                            text-white/35
-                            cursor-pointer
+                            bg-white/5 border-white/10 text-white/35
+                            cursor-not-allowed
                           `
                           : `
-                            bg-cyan-500/10
-                            border-cyan-400/40
-                            text-cyan-200
+                            bg-cyan-500/10 border-cyan-400/40 text-cyan-200
                             shadow-[0_0_20px_rgba(34,211,238,0.25)]
-                            hover:bg-cyan-500/20
-                            hover:border-cyan-400
+                            hover:bg-cyan-500/20 hover:border-cyan-400
                             hover:shadow-[0_0_30px_rgba(34,211,238,0.45)]
                             active:translate-y-[1px]
                           `
@@ -487,7 +476,6 @@ export default function Contact() {
                     <span className="text-xs">→</span>
                   </button>
 
-                  {/* Mail fallback */}
                   <a
                     href={`mailto:${RECEIVER_EMAIL}?subject=${encodeURIComponent(
                       form.subject || "문의드립니다"
@@ -504,7 +492,7 @@ export default function Contact() {
                       bg-white/5
                       text-sm font-semibold text-white/80
                       hover:bg-white/10 hover:border-white/25
-                      transition-all duration-300
+                      transition
                     "
                   >
                     메일로 직접 보내기
@@ -515,10 +503,10 @@ export default function Contact() {
                 {/* 부족 항목 안내 */}
                 {touched && errors.length > 0 && (
                   <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    <div className="text-xs font-semibold text-white/70 mb-2">
+                    <div className="text-[11px] sm:text-xs font-semibold text-white/70 mb-2">
                       아래 항목을 확인해주세요
                     </div>
-                    <ul className="space-y-1.5 text-xs text-white/70 leading-5">
+                    <ul className="space-y-1.5 text-[11px] sm:text-xs text-white/70 leading-5">
                       {errors.map((msg) => (
                         <li key={msg} className="flex gap-2">
                           <span className="mt-2 h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
@@ -527,7 +515,6 @@ export default function Contact() {
                       ))}
                     </ul>
 
-                    {/* ✅ 모바일 편의: 첫 오류로 이동 버튼 */}
                     {isTouchDevice() && (
                       <button
                         type="button"
@@ -540,7 +527,7 @@ export default function Contact() {
                           bg-white/5
                           text-sm font-semibold text-white/80
                           hover:bg-white/10
-                          transition-all
+                          transition
                         "
                       >
                         첫 오류로 이동
@@ -553,21 +540,14 @@ export default function Contact() {
           </div>
 
           {/* Side card */}
-          <div
-            className="
-              relative z-10
-              rounded-3xl border border-white/10
-              bg-white/5 backdrop-blur-xl
-              p-5 sm:p-8
-              shadow-[0_25px_70px_rgba(0,0,0,0.55)]
-              h-fit
-            "
-          >
-            <h3 className="text-lg sm:text-xl font-semibold mb-4">연락처</h3>
+          <aside className={`relative z-10 ${card} p-5 sm:p-8 h-fit`}>
+            <h3 className="text-[16px] sm:text-xl font-semibold mb-3 sm:mb-4">
+              연락처
+            </h3>
 
-            <div className="space-y-3 text-sm text-white/75">
+            <div className="space-y-3 text-[13px] sm:text-sm text-white/75">
               <div className="flex items-start justify-between gap-3">
-                <span className="text-white/60 shrink-0">Email</span>
+                <span className="text-white/55 shrink-0">Email</span>
                 <a
                   className="text-cyan-300 hover:text-cyan-200 text-right break-all"
                   href={`mailto:${RECEIVER_EMAIL}`}
@@ -577,16 +557,16 @@ export default function Contact() {
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <span className="text-white/60">응답</span>
+                <span className="text-white/55">응답</span>
                 <span>1–2영업일 내</span>
               </div>
             </div>
 
-            <div className="mt-6 sm:mt-8">
-              <h4 className="text-sm font-semibold text-white/80 mb-3">
+            <div className={sectionGap}>
+              <h4 className="text-[13px] sm:text-sm font-semibold text-white/80 mb-3">
                 문의에 포함하면 좋은 정보
               </h4>
-              <ul className="space-y-2 text-sm text-white/70">
+              <ul className="space-y-2 text-[13px] sm:text-sm text-white/70">
                 <li className="flex gap-3">
                   <span className="mt-2 h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
                   <span>목표 적응증 / 연구 목표</span>
@@ -610,7 +590,7 @@ export default function Contact() {
                 연구 서비스 보기 <span className="text-xs">→</span>
               </Link>
             </div>
-          </div>
+          </aside>
         </div>
 
         <div className="mt-10 sm:mt-12 text-center text-[11px] sm:text-xs text-white/50">

@@ -1,143 +1,201 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+// src/layouts/Layout.tsx
 import { useEffect, useMemo, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+
+function cn(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
 
 export function Layout() {
-  const base = import.meta.env.BASE_URL;
-
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
-  // ✅ Home 판별 (GitHub Pages BASE_URL 환경에서도 안전하게)
-  const isHome = useMemo(() => {
-    // react-router의 pathname은 보통 "/" 형태로 들어옴
-    return location.pathname === "/" || location.pathname === "";
+  // 라우트 바뀌면 모바일 메뉴 자동 닫기
+  useEffect(() => {
+    setMenuOpen(false);
   }, [location.pathname]);
 
-  // 라우트가 바뀌면 모바일 메뉴 자동 닫기
+  // 모바일 메뉴 열렸을 때 스크롤 잠금 (배경 스크롤 방지)
   useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
+
+  const navItems = useMemo(
+    () => [
+      { to: "/", label: "Home" },
+      { to: "/about", label: "연구소 소개" },
+      { to: "/team", label: "연구진" },
+      { to: "/services", label: "연구서비스" },
+      { to: "/contact", label: "문의하기" },
+    ],
+    []
+  );
 
   return (
-    <div className="relative h-[100dvh] w-full overflow-hidden text-white flex flex-col">
-      {/* ===== 공통 배경 (모든 페이지 동일) ===== */}
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        className="pointer-events-none fixed inset-0 -z-20 h-full w-full object-cover"
-      >
-        <source src={`${base}hero-bg.mp4`} type="video/mp4" />
-      </video>
+    <div className="min-h-dvh w-full">
+      {/* ===== Background layer (원래 비디오/배경이 있다면 여기와 겹치게 구성해도 됨) ===== */}
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        {/* 은은한 그라데이션/비네트: 비디오 배경에서도 텍스트 가독성 확보 */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/70" />
+        <div className="absolute inset-0 [mask-image:radial-gradient(60%_60%_at_50%_20%,black,transparent)] bg-white/10" />
+      </div>
 
-      <div
-        className="pointer-events-none fixed inset-0 -z-30 bg-cover bg-center"
-        style={{ backgroundImage: `url(${base}hero-bg.jpg)` }}
-      />
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-black/55" />
-      {/* ===================================== */}
+      {/* ===== Header ===== */}
+      <header className="sticky top-0 z-40">
+        {/* 상단 바: 모바일 높이 줄이고, 배경 위 가독성 확보 */}
+        <div className="backdrop-blur-md bg-black/35 border-b border-white/10">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="h-14 sm:h-16 flex items-center justify-between gap-3">
+              {/* Logo */}
+              <NavLink
+                to="/"
+                className="flex items-center gap-2 min-w-0"
+                aria-label="Go to Home"
+              >
+                {/* 로고 이미지로 바꾸고 싶으면 아래 span 대신 img 넣으면 됨 */}
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 border border-white/15">
+                  <span className="text-white font-extrabold text-sm">L</span>
+                </span>
 
-      {/* ===== 공통 헤더 ===== */}
-      <header className="relative w-full shrink-0">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 py-4 lg:px-10">
-          <Link to="/" className="flex min-w-0 items-center gap-3">
-            <img
-              src={`${base}logo.png`}
-              alt="로안생명공학연구소 로고"
-              className="h-9 sm:h-10 w-auto object-contain"
-              loading="eager"
-              decoding="async"
-            />
-            <span className="min-w-0 truncate text-base font-semibold tracking-tight sm:text-lg">
-              <span className="sm:hidden">로안생명공학연구소</span>
-              <span className="hidden sm:inline">로안생명공학연구소</span>
-            </span>
-          </Link>
+                <div className="min-w-0">
+                  <div className="truncate text-white font-semibold leading-tight text-[13px] sm:text-sm">
+                    로안생명공학연구소
+                  </div>
+                  <div className="truncate text-white/60 text-[11px] sm:text-xs">
+                    Translational Bio-AI R&amp;D
+                  </div>
+                </div>
+              </NavLink>
 
-          {/* 데스크탑 메뉴 */}
-          <nav className="hidden gap-8 text-sm text-white/80 md:flex">
-            <Link to="/" className="hover:text-white">홈</Link>
-            <Link to="/about" className="hover:text-white">연구소 소개</Link>
-            <Link to="/team" className="hover:text-white">연구진</Link>
-            <Link to="/services" className="hover:text-white">연구서비스</Link>
-            <Link to="/contact" className="hover:text-white">문의하기</Link>
-          </nav>
+              {/* Desktop Nav */}
+              <nav className="hidden md:flex items-center gap-1">
+                {navItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      cn(
+                        "px-3 py-2 rounded-xl text-sm font-semibold transition",
+                        "text-white/75 hover:text-white hover:bg-white/10",
+                        isActive && "text-white bg-white/15 border border-white/15"
+                      )
+                    }
+                    end={item.to === "/"}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </nav>
 
-          {/* 모바일 햄버거 버튼 */}
-          <button
-            type="button"
-            className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-white/90 backdrop-blur-md transition hover:bg-white/10 md:hidden"
-            aria-label="메뉴 열기"
-            aria-expanded={mobileOpen}
-            onClick={() => setMobileOpen((v) => !v)}
-          >
-            <span className="text-xl leading-none">{mobileOpen ? "✕" : "☰"}</span>
-          </button>
+              {/* Mobile Menu Button */}
+              <button
+                type="button"
+                className={cn(
+                  "md:hidden inline-flex items-center justify-center",
+                  "h-10 w-10 rounded-xl",
+                  "bg-white/10 hover:bg-white/15 border border-white/15",
+                  "text-white transition"
+                )}
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label="Open menu"
+                aria-expanded={menuOpen}
+              >
+                {/* simple icon */}
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="opacity-90"
+                >
+                  <path
+                    d="M4 7H20M4 12H20M4 17H20"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* 모바일 드롭다운 메뉴 */}
-        {mobileOpen && (
+        {/* Mobile menu overlay */}
+        {menuOpen && (
           <div className="md:hidden">
-            <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10">
-              <div className="rounded-2xl border border-white/10 bg-black/60 p-4 backdrop-blur-md shadow-xl">
-                <nav className="flex flex-col gap-2 text-base text-white/90">
-                  <Link to="/" className="rounded-xl px-3 py-2 hover:bg-white/10">
-                    홈
-                  </Link>
-                  <Link to="/about" className="rounded-xl px-3 py-2 hover:bg-white/10">
-                    연구소 소개
-                  </Link>
-                  <Link to="/team" className="rounded-xl px-3 py-2 hover:bg-white/10">
-                    연구진
-                  </Link>
-                  <Link to="/services" className="rounded-xl px-3 py-2 hover:bg-white/10">
-                    연구서비스
-                  </Link>
-                  <Link to="/contact" className="rounded-xl px-3 py-2 hover:bg-white/10">
-                    문의하기
-                  </Link>
-                </nav>
+            {/* 오버레이 */}
+            <button
+              type="button"
+              className="fixed inset-0 z-40 bg-black/55"
+              aria-label="Close menu overlay"
+              onClick={() => setMenuOpen(false)}
+            />
+            {/* 메뉴 패널 */}
+            <div className="fixed top-14 left-0 right-0 z-50">
+              <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+                <div className="rounded-2xl border border-white/12 bg-black/75 backdrop-blur-md shadow-xl overflow-hidden">
+                  <div className="p-2">
+                    {navItems.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        className={({ isActive }) =>
+                          cn(
+                            "flex items-center justify-between",
+                            "px-4 py-3 rounded-xl text-[15px] font-semibold transition",
+                            "text-white/80 hover:text-white hover:bg-white/10",
+                            isActive && "text-white bg-white/15 border border-white/15"
+                          )
+                        }
+                        end={item.to === "/"}
+                      >
+                        <span>{item.label}</span>
+                        <span className="text-white/40">›</span>
+                      </NavLink>
+                    ))}
+                  </div>
+
+                  <div className="px-4 pb-4 pt-2 border-t border-white/10">
+                    <div className="text-white/55 text-xs leading-relaxed">
+                      CRO 협업 · 정부과제 · 데이터 기반 검증
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         )}
       </header>
 
-      {/* ===== 본문(라우팅에 따라 바뀌는 영역) =====
-          - ✅ 핵심: main이 남은 높이를 다 먹고 (flex-1)
-          - ✅ 일반 페이지는 overflow-y-auto로 스크롤
-          - ✅ Home은 overflow-hidden으로 스크롤 차단
+      {/* ===== Main =====
+          - 헤더 높이 + 모바일 패딩 고려해서 컨텐츠가 과하게 아래로 밀리지 않게
+          - Home 처럼 "hero" 컨텐츠가 있는 페이지는 여기 padding이 중요
       */}
-      <main
-        className={[
-          "relative mx-auto w-full max-w-7xl flex-1 min-h-0",
-          // padding은 페이지가 아닌 layout에서 주되, home은 조금 줄여서 한 화면 맞추기
-          "px-4 sm:px-6 lg:px-10",
-          isHome ? "pb-3 sm:pb-4 overflow-hidden" : "pb-12 sm:pb-16 overflow-y-auto",
-        ].join(" ")}
-      >
-        <Outlet />
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        {/* 모바일에서 위 여백을 과하게 주지 않기 */}
+        <div className="pt-6 sm:pt-10 pb-10 sm:pb-14">
+          <Outlet />
+        </div>
       </main>
 
-      {/* ===== 공통 푸터 =====
-          - ✅ 일반 페이지: 레이아웃 흐름에 포함(shrink-0) -> main이 남은 높이만 씀
-          - ✅ Home: footer가 높이를 차지하면 스크롤 생기므로, '겹쳐서' 보여주기(absolute) 또는 숨기기
-      */}
-      {isHome ? (
-        <footer className="pointer-events-none absolute bottom-3 left-0 right-0 z-10">
-          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 text-center text-[11px] sm:text-xs text-white/40">
-            © {new Date().getFullYear()} 로안생명공학연구소
+      {/* ===== Footer (선택) ===== */}
+      <footer className="border-t border-white/10 bg-black/20">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="text-white/55 text-xs">
+              © {new Date().getFullYear()} LoAn Bioengineering Research Institute
+            </div>
+            <div className="text-white/45 text-xs">
+              Daejeon · Korea
+            </div>
           </div>
-        </footer>
-      ) : (
-        <footer className="relative mx-auto w-full max-w-7xl shrink-0 px-4 sm:px-6 pb-8 lg:px-10 text-white/70 text-sm">
-          <div className="border-t border-white/10 pt-6">
-            © {new Date().getFullYear()} 로안생명공학연구소
-          </div>
-        </footer>
-      )}
+        </div>
+      </footer>
     </div>
   );
 }
