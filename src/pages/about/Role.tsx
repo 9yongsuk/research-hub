@@ -164,7 +164,7 @@ export default function Role() {
             </h1>
 
             <p className="mt-3 text-white/80 text-[13px] leading-[1.75]">
-              본 연구소는 임상 현장에서 축적되는 치료 경험을 표준화하고, 과학적 근거로
+              로안365한의원 기업부설연구소로서 임상 현장에서 축적되는 데이터를 표준화하고, 과학적 근거로
               확장하기 위한 연구를 수행합니다.
             </p>
 
