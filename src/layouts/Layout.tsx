@@ -163,13 +163,13 @@ export function Layout() {
       {/* 1) 항상 깔아두는 배경 이미지 */}
       <div
         className="pointer-events-none fixed inset-0 -z-30 bg-cover bg-center"
-        style={{ backgroundImage: `url(${base}hero-bg.jpg)` }}
+        style={{ backgroundImage: `url(${base}hero-bg.webp)` }}
       />
 
       {/* 2) 모바일에서 "처음엔 사진 → 비디오 준비되면 페이드 아웃" */}
       {isMobile && (
         <img
-          src={`${base}hero-bg.jpg`}
+          src={`${base}hero-bg.webp`}
           alt=""
           aria-hidden="true"
           className={[
@@ -189,7 +189,7 @@ export function Layout() {
         loop
         playsInline
         preload="auto"
-        poster={`${base}hero-bg.jpg`}
+        poster={`${base}hero-bg.webp`}
         className={[
           "pointer-events-none fixed inset-0 -z-20 h-full w-full object-cover",
           "transition-opacity duration-500",
