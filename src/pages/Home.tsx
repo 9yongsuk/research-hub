@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <section className="w-full">
       {/* ✅ 중앙 → 살짝 위로 이동 */}
-      <div className="min-h-[calc(100svh-56px)] sm:min-h-[calc(100svh-64px)] flex items-start pt-[16vh] sm:pt-[18vh]">
+      <div className="min-h-[calc(100svh-56px)] sm:min-h-[calc(100svh-64px)] flex items-start pt-[12vh] sm:pt-[18vh]">
         <div className="w-full">
           <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] tracking-[0.18em] uppercase text-white/70 sm:text-xs">
             Translational R&amp;D Platform
