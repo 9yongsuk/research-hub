@@ -11,7 +11,7 @@ export type HistoryItem = {
 };
 
 export const aboutContent = {
-  heroTitle: "생명과학·임상의학 기반 Translational 연구",
+  heroTitle: "생명과학·임상의학 기반 Translational Research",
 
   heroSubtitle: [
     "로안생명공학연구소는 임상 현장에서 관찰되는 미충족 수요를 출발점으로 분자 수준의 기전 규명과 재현성 있는 검증 체계 구축을 수행합니다.",
@@ -30,7 +30,7 @@ export const aboutContent = {
       title: "미션",
       body: [
         "임상 기반 질문을 분자·세포·오믹스 수준의 검증 가능한 근거로 전환하고, 적용 가능한 평가 지표와 연구 프로토콜로 연결합니다.",
-        "표준 SOP와 반복 검증을 통해 재현성 높은 연구 체계를 구축하며, 협력 네트워크(학계·산업·CRO)를 통해 연구 범위를 확장합니다.",
+        "SOP와 반복 검증을 통해 재현성 높은 연구 체계를 구축하며, 협력 네트워크(학계·산업·CRO)를 통해 연구 범위를 확장합니다.",
       ],
     },
     {

@@ -1,4 +1,5 @@
 // src/pages/About.tsx
+import { Link, useLocation } from "react-router-dom";
 import { aboutContent } from "../content/about";
 
 function splitLine(line: string) {
@@ -30,8 +31,61 @@ function FeatureRowText({ head, tail }: { head: string; tail?: string }) {
   );
 }
 
+function getEnglishTitle(title: string) {
+  switch (title) {
+    case "미션":
+      return "MISSION";
+    case "핵심 연구축":
+      return "CORE RESEARCH AXIS";
+    case "연구 인프라/협력":
+      return "INFRASTRUCTURE & COLLABORATION";
+    default:
+      return title.toUpperCase();
+  }
+}
+
+/**
+ * ✅ 카드 내부 탭: 개요/역할
+ * - useLocation()을 쓰지 않고 pathname을 props로만 받음 (Hook 오류 방지)
+ */
+function InlineAboutTabs({
+  pathname,
+  compact = false,
+}: {
+  pathname: string;
+  compact?: boolean;
+}) {
+  const isOverview = pathname === "/about";
+  const isRole = pathname === "/about/role";
+
+  const wrap = compact
+    ? "inline-flex items-center rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-sm"
+    : "inline-flex items-center rounded-2xl border border-white/10 bg-white/5 p-1.5 backdrop-blur-sm";
+
+  const btnBase =
+    "rounded-xl px-3 py-2 text-[13px] font-semibold transition";
+
+  const active = "bg-white/12 text-white";
+  const inactive = "text-white/70 hover:text-white hover:bg-white/10";
+
+  return (
+    <div className={wrap} aria-label="연구소 소개 탭">
+      <Link to="/about" className={`${btnBase} ${isOverview ? active : inactive}`}>
+        개요
+      </Link>
+      <Link
+        to="/about/role"
+        className={`${btnBase} ${isRole ? active : inactive}`}
+      >
+        역할
+      </Link>
+    </div>
+  );
+}
+
 export default function About() {
   const base = import.meta.env.BASE_URL;
+  const location = useLocation();
 
   // 공통 카드 톤
   const card = "rounded-3xl border border-white/10 bg-black/25 backdrop-blur-md";
@@ -47,11 +101,15 @@ export default function About() {
         {/* HERO (Mobile): 텍스트 위, 이미지 아래 */}
         <section className="grid gap-5">
           <div className={`${card} ${padM} bg-black/30`}>
-            <div className="text-[11px] tracking-[0.28em] text-sky-300">
-              ABOUT
+            {/* ✅ ABOUT 라벨 + 탭을 카드 안으로 */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[11px] tracking-[0.28em] text-sky-300">
+                ABOUT
+              </div>
+              <InlineAboutTabs pathname={location.pathname} compact />
             </div>
 
-            <h1 className="mt-2 font-extrabold text-[22px] sm:text-[26px] lg:text-[36px] leading-[1.18] tracking-[-0.01em] text-white">
+            <h1 className="mt-3 font-extrabold text-[22px] sm:text-[26px] lg:text-[36px] leading-[1.18] tracking-[-0.01em] text-white">
               {aboutContent.heroTitle}
             </h1>
 
@@ -111,8 +169,9 @@ export default function About() {
             <div key={sec.title} className={`${card} ${padM}`}>
               <div className="min-w-0">
                 <div className="text-[11px] tracking-[0.22em] text-sky-300">
-                  {sec.title.toUpperCase()}
+                  {getEnglishTitle(sec.title)}
                 </div>
+
                 <h3 className="mt-1 text-[16px] font-semibold text-white leading-tight">
                   {sec.title}
                 </h3>
@@ -141,9 +200,6 @@ export default function About() {
             <h2 className="mt-2 text-[22px] font-extrabold text-white">
               연구소 연혁
             </h2>
-            <p className="mt-2 text-white/60 text-[12px]">
-              주요 이정표를 시간 흐름에 따라 정리했습니다.
-            </p>
           </div>
 
           <div className="mt-7 mx-auto max-w-3xl">
@@ -188,13 +244,17 @@ export default function About() {
           {/* Text (좌) */}
           <div className="lg:col-span-7">
             <div className={`${card} ${padD} bg-black/30 h-full`}>
-              <div className="text-[11px] tracking-[0.28em] text-sky-300">
-                ABOUT
+              {/* ✅ ABOUT 라벨 + 탭을 카드 안으로 */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="text-[11px] tracking-[0.28em] text-sky-300">
+                  ABOUT
+                </div>
+                <InlineAboutTabs pathname={location.pathname} />
               </div>
 
               <h1
                 className="
-                  mt-2 font-extrabold text-white leading-[1.12] tracking-[-0.015em]
+                  mt-3 font-extrabold text-white leading-[1.12] tracking-[-0.015em]
                   text-[clamp(26px,2.2vw,34px)] max-w-[26ch]
                 "
               >
@@ -223,9 +283,7 @@ export default function About() {
                       <div className="text-2xl font-extrabold text-white">
                         {s.value}
                       </div>
-                      <div className="mt-1 text-sm text-white/70">
-                        {s.label}
-                      </div>
+                      <div className="mt-1 text-sm text-white/70">{s.label}</div>
                     </div>
                   ))}
                 </div>
@@ -264,8 +322,9 @@ export default function About() {
                 {/* Header */}
                 <div>
                   <div className="text-[11px] tracking-[0.22em] text-sky-300">
-                    {sec.title.toUpperCase()}
+                    {getEnglishTitle(sec.title)}
                   </div>
+
                   <h3 className="mt-2 text-xl font-semibold text-white leading-tight">
                     {sec.title}
                   </h3>

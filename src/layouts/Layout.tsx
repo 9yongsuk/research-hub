@@ -7,6 +7,16 @@ export function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
+  // ✅ 데스크탑: 연구소 소개 드롭다운 상태 + 클릭 직후 잠깐 재오픈 방지(lock)
+const [aboutMenuOpen, setAboutMenuOpen] = useState(false);
+const [aboutHoverLock, setAboutHoverLock] = useState(false);
+
+// 라우트 변경 시 드롭다운 닫기 + lock 해제
+useEffect(() => {
+  setAboutMenuOpen(false);
+  setAboutHoverLock(false);
+}, [location.pathname]);
+
   // ✅ Home 판별
   const isHome = useMemo(() => {
     return location.pathname === "/" || location.pathname === "";
@@ -22,6 +32,10 @@ export function Layout() {
 
   // ✅ 같은 탭 다시 누를 때도 "탭이 나타나는" 느낌을 주기 위한 강제 리마운트 키
   const [routeNonce, setRouteNonce] = useState(0);
+
+  // ✅ 모바일: 연구소 소개 하위 메뉴 펼침/접힘
+  const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
+
 
   // ✅ 공용: main을 맨 위로 올리기
   const scrollMainToTop = (smooth = true) => {
@@ -55,9 +69,10 @@ export function Layout() {
       }
     };
 
-  // 라우트가 바뀌면 모바일 메뉴 자동 닫기
+  // 라우트가 바뀌면 모바일 메뉴 자동 닫기 + 모바일 about subnav도 닫기
   useEffect(() => {
     setMobileOpen(false);
+    setMobileAboutOpen(false);
   }, [location.pathname]);
 
   // ✅ Home 진입 시 copyright 잠깐 보여주고 자동 fade out
@@ -112,8 +127,6 @@ export function Layout() {
   }, [hideScrollHint, location.pathname]);
 
   // ✅ Drawer가 열려 있을 때, 배경 스크롤/터치 스크롤 감각까지 더 확실히 잠그고 싶으면
-  // main overflow-hidden만으로도 충분한데, iOS에서 body 스크롤 튀는 경우 대비용.
-  // (부작용 최소화 위해 mobileOpen일 때만)
   useEffect(() => {
     if (!mobileOpen) return;
 
@@ -123,6 +136,11 @@ export function Layout() {
       document.documentElement.style.overflow = prev;
     };
   }, [mobileOpen]);
+
+  // ✅ 현재 About 섹션 활성화 판단 (개요/역할 모두)
+  const isAboutSection = useMemo(() => {
+    return location.pathname === "/about" || location.pathname.startsWith("/about/");
+  }, [location.pathname]);
 
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden text-white flex flex-col">
@@ -151,8 +169,8 @@ export function Layout() {
             to="/"
             className="flex min-w-0 items-center gap-3"
             onClick={() => {
-              // 로고 탭 시 drawer 닫기 (모바일에서 종종 유용)
               setMobileOpen(false);
+              setMobileAboutOpen(false);
             }}
           >
             <img
@@ -168,14 +186,105 @@ export function Layout() {
             </span>
           </Link>
 
-          {/* 데스크탑 메뉴 (같은 탭 클릭 시에도 스크롤 top + 리마운트) */}
+          {/* ===================== 데스크탑 메뉴 ===================== */}
           <nav className="hidden gap-8 text-base lg:text-[17px] text-white/80 md:flex">
             <Link to="/" className="hover:text-white" onClick={handleNavClick("/")}>
               홈
             </Link>
-            <Link to="/about" className="hover:text-white" onClick={handleNavClick("/about")}>
+
+          {/* ✅ 연구소 소개: hover로 항상 열림 + 클릭하면 즉시 닫히고 잠깐 재오픈 방지 */}
+          <div
+            className="relative"
+            onMouseEnter={() => {
+              if (aboutHoverLock) return; // 클릭 직후 잠깐 막기
+              setAboutMenuOpen(true);
+            }}
+            onMouseLeave={() => {
+              setAboutMenuOpen(false);
+            }}
+          >
+            <Link
+              to="/about"
+              className={[
+                "hover:text-white inline-flex items-center gap-1",
+                isAboutSection ? "text-white" : "",
+              ].join(" ")}
+              onClick={(e) => {
+                // /about에서 다시 눌렀을 때 리마운트/스크롤탑은 기존 로직대로
+                handleNavClick("/about")(e);
+
+                // ✅ 클릭 시 드롭다운 즉시 닫기 + 잠깐 hover 재오픈 방지
+                setAboutMenuOpen(false);
+                setAboutHoverLock(true);
+                window.setTimeout(() => setAboutHoverLock(false), 350);
+              }}
+              aria-haspopup="menu"
+              aria-expanded={aboutMenuOpen}
+            >
               연구소 소개
+              <span className="text-[12px] opacity-80">▾</span>
             </Link>
+
+            {/* ✅ hover 이동할 때 끊김 방지용 "bridge" */}
+            <div className="absolute left-0 top-full h-3 w-[180px]" />
+
+            {/* Dropdown panel */}
+            <div
+              className={[
+                "absolute left-0 top-full mt-3 w-[180px] rounded-2xl border border-white/10",
+                "bg-black/75 backdrop-blur-md shadow-2xl",
+                // ✅ 다른 요소(sticky 탭 등)에 가리지 않게
+                "z-[999]",
+                // ✅ open/close
+                "transition-all duration-150",
+                aboutMenuOpen
+                  ? "opacity-100 translate-y-0 pointer-events-auto"
+                  : "opacity-0 -translate-y-1 pointer-events-none",
+              ].join(" ")}
+              role="menu"
+            >
+              <div className="p-2">
+                <Link
+                  to="/about"
+                  className={[
+                    "block rounded-xl px-3 py-2 text-[14px] text-white/85 hover:bg-white/10 hover:text-white",
+                    location.pathname === "/about" ? "bg-white/10 text-white" : "",
+                  ].join(" ")}
+                  onClick={(e) => {
+                    handleNavClick("/about")(e);
+
+                    // ✅ 클릭하면 즉시 닫기 + 잠깐 hover 재오픈 방지
+                    setAboutMenuOpen(false);
+                    setAboutHoverLock(true);
+                    window.setTimeout(() => setAboutHoverLock(false), 350);
+                  }}
+                  role="menuitem"
+                >
+                  개요
+                </Link>
+
+                <Link
+                  to="/about/role"
+                  className={[
+                    "mt-1 block rounded-xl px-3 py-2 text-[14px] text-white/85 hover:bg-white/10 hover:text-white",
+                    location.pathname === "/about/role" ? "bg-white/10 text-white" : "",
+                  ].join(" ")}
+                  onClick={(e) => {
+                    handleNavClick("/about/role")(e);
+
+                    // ✅ 클릭하면 즉시 닫기 + 잠깐 hover 재오픈 방지
+                    setAboutMenuOpen(false);
+                    setAboutHoverLock(true);
+                    window.setTimeout(() => setAboutHoverLock(false), 350);
+                  }}
+                  role="menuitem"
+                >
+                  역할
+                </Link>
+              </div>
+            </div>
+          </div>
+
             <Link to="/team" className="hover:text-white" onClick={handleNavClick("/team")}>
               연구진
             </Link>
@@ -195,7 +304,7 @@ export function Layout() {
             </Link>
           </nav>
 
-          {/* 모바일 햄버거 버튼 */}
+          {/* ===================== 모바일 햄버거 버튼 ===================== */}
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-white/90 backdrop-blur-md transition hover:bg-white/10 md:hidden"
@@ -207,13 +316,11 @@ export function Layout() {
           </button>
         </div>
 
-        {/* ===== Mobile Drawer (overlay + fixed panel) ===== */}
-        {/* ✅ 레이아웃을 밀지 않고 화면 위로 덮어서 나타남 */}
+        {/* ===================== Mobile Drawer (overlay + fixed panel) ===================== */}
         <div
           className={[
             "md:hidden",
             "fixed inset-0 z-50",
-            // open일 때만 클릭/터치 가능
             mobileOpen ? "pointer-events-auto" : "pointer-events-none",
           ].join(" ")}
           aria-hidden={!mobileOpen}
@@ -226,7 +333,10 @@ export function Layout() {
               "transition-opacity duration-200 ease-out",
               mobileOpen ? "opacity-100" : "opacity-0",
             ].join(" ")}
-            onClick={() => setMobileOpen(false)}
+            onClick={() => {
+              setMobileOpen(false);
+              setMobileAboutOpen(false);
+            }}
           />
 
           {/* Panel */}
@@ -236,13 +346,11 @@ export function Layout() {
               "border-l border-white/10 bg-black/70 backdrop-blur-md shadow-2xl",
               "transition-transform duration-250 ease-out",
               mobileOpen ? "translate-x-0" : "translate-x-full",
-              // safe area 대응 느낌(아이폰 노치 등)
               "pt-4 pb-6",
             ].join(" ")}
             role="dialog"
             aria-modal="true"
             aria-label="모바일 메뉴"
-            // 패널 내부 클릭은 backdrop 닫힘 방지
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drawer Header */}
@@ -270,7 +378,10 @@ export function Layout() {
                   type="button"
                   className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-white/90 backdrop-blur-md transition hover:bg-white/10"
                   aria-label="메뉴 닫기"
-                  onClick={() => setMobileOpen(false)}
+                  onClick={() => {
+                    setMobileOpen(false);
+                    setMobileAboutOpen(false);
+                  }}
                 >
                   ✕
                 </button>
@@ -288,13 +399,54 @@ export function Layout() {
               >
                 홈
               </Link>
-              <Link
-                to="/about"
-                className="rounded-2xl px-3 py-3 hover:bg-white/10 active:bg-white/10"
-                onClick={handleNavClick("/about")}
+
+              {/* ✅ 모바일: 연구소 소개는 "버튼"으로 펼치기 */}
+              <button
+                type="button"
+                className={[
+                  "rounded-2xl px-3 py-3 text-left",
+                  "hover:bg-white/10 active:bg-white/10",
+                  "flex items-center justify-between",
+                  isAboutSection ? "bg-white/5" : "",
+                ].join(" ")}
+                aria-expanded={mobileAboutOpen}
+                onClick={() => setMobileAboutOpen((v) => !v)}
               >
-                연구소 소개
-              </Link>
+                <span>연구소 소개</span>
+                <span className="text-sm text-white/70">{mobileAboutOpen ? "▴" : "▾"}</span>
+              </button>
+
+              {/* ✅ 펼쳐진 하위 링크: 개요 / 역할 */}
+              <div
+                className={[
+                  "overflow-hidden transition-all duration-200",
+                  mobileAboutOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0",
+                ].join(" ")}
+              >
+                <div className="mt-1 ml-2 flex flex-col gap-1 border-l border-white/10 pl-3">
+                  <Link
+                    to="/about"
+                    className={[
+                      "rounded-2xl px-3 py-2 text-[15px] text-white/85 hover:bg-white/10 active:bg-white/10",
+                      location.pathname === "/about" ? "bg-white/10 text-white" : "",
+                    ].join(" ")}
+                    onClick={handleNavClick("/about")}
+                  >
+                    개요
+                  </Link>
+                  <Link
+                    to="/about/role"
+                    className={[
+                      "rounded-2xl px-3 py-2 text-[15px] text-white/85 hover:bg-white/10 active:bg-white/10",
+                      location.pathname === "/about/role" ? "bg-white/10 text-white" : "",
+                    ].join(" ")}
+                    onClick={handleNavClick("/about/role")}
+                  >
+                    역할
+                  </Link>
+                </div>
+              </div>
+
               <Link
                 to="/team"
                 className="rounded-2xl px-3 py-3 hover:bg-white/10 active:bg-white/10"
@@ -327,7 +479,6 @@ export function Layout() {
                 </div>
               </div>
 
-              {/* Safe bottom padding 느낌 */}
               <div className="h-6" />
             </nav>
           </aside>
@@ -340,8 +491,6 @@ export function Layout() {
         className={[
           "relative mx-auto w-full max-w-7xl flex-1 min-h-0 no-scrollbar",
           "px-4 sm:px-6 lg:px-10",
-          // ✅ Home: 한 화면 고정 + footer-safe padding
-          // ✅ Drawer 열리면 main 스크롤 잠금
           isHome
             ? "pb-14 sm:pb-16 overflow-hidden"
             : mobileOpen
