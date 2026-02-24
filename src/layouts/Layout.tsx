@@ -38,24 +38,7 @@ export function Layout() {
     );
   }, [location.pathname]);
 
-  // ✅ 모바일 여부 + 모바일에서 "처음은 사진 → 비디오 준비되면 전환"
-  const [isMobile, setIsMobile] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const apply = () => setIsMobile(mq.matches);
-    apply();
-    mq.addEventListener?.("change", apply);
-    return () => mq.removeEventListener?.("change", apply);
-  }, []);
-
-  // 모바일에서는 라우트/상태 변동 때도 체감 좋게 videoReady 리셋 (원치 않으면 제거해도 됨)
-  useEffect(() => {
-    if (isMobile) setVideoReady(false);
-  }, [isMobile, location.pathname]);
-
-  // 라우트 변경 시 드롭다운 닫기 + lock 해제 + 모바일 메뉴 닫기 + 모바일 about subnav도 닫기
+  // 라우트 변경 시 드롭다운/모바일 메뉴 닫기
   useEffect(() => {
     setAboutMenuOpen(false);
     setAboutHoverLock(false);
@@ -82,7 +65,7 @@ export function Layout() {
 
       // "같은 탭"이면 라우트 변화가 없으므로, 우리가 반응을 만들어줘야 함
       if (to === location.pathname || (to === "/" && isHome)) {
-        e.preventDefault(); // 라우터가 아무 것도 안 하는 상황을 우리가 제어
+        e.preventDefault();
 
         // main을 맨 위로
         scrollMainToTop(true);
@@ -146,7 +129,7 @@ export function Layout() {
     return () => el.removeEventListener("scroll", onScroll);
   }, [hideScrollHint, location.pathname]);
 
-  // ✅ Drawer가 열려 있을 때, 배경 스크롤/터치 스크롤 감각까지 더 확실히 잠금
+  // ✅ Drawer가 열려 있을 때 배경 스크롤 잠금
   useEffect(() => {
     if (!mobileOpen) return;
 
@@ -159,44 +142,22 @@ export function Layout() {
 
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden text-white flex flex-col">
-      {/* ===== 공통 배경 ===== */}
-      {/* 1) 항상 깔아두는 배경 이미지 */}
+      {/* ===== 공통 배경 (poster 방식) ===== */}
+      {/* ✅ 처음엔 poster/배경이미지로 '사진처럼' 보이고, 준비되면 비디오가 자동 재생됨 */}
+      {/* ⚠️ 파일명 오타 주의: hero-bg.wepb -> 보통 hero-bg.webp 가 정상 */}
       <div
         className="pointer-events-none fixed inset-0 -z-30 bg-cover bg-center"
-        style={{ backgroundImage: `url(${base}hero-bg.webp)` }}
+        style={{ backgroundImage: `url(${base}hero-bg.wepb)` }}
       />
 
-      {/* 2) 모바일에서 "처음엔 사진 → 비디오 준비되면 페이드 아웃" */}
-      {isMobile && (
-        <img
-          src={`${base}hero-bg.webp`}
-          alt=""
-          aria-hidden="true"
-          className={[
-            "pointer-events-none fixed inset-0 -z-25 h-full w-full object-cover",
-            "transition-opacity duration-500",
-            videoReady ? "opacity-0" : "opacity-100",
-          ].join(" ")}
-          decoding="async"
-          loading="eager"
-        />
-      )}
-
-      {/* 3) 비디오 레이어 (모바일은 준비될 때까지 투명) */}
       <video
         autoPlay
         muted
         loop
         playsInline
         preload="auto"
-        poster={`${base}hero-bg.webp`}
-        className={[
-          "pointer-events-none fixed inset-0 -z-20 h-full w-full object-cover",
-          "transition-opacity duration-500",
-          isMobile ? (videoReady ? "opacity-100" : "opacity-0") : "opacity-100",
-        ].join(" ")}
-        onCanPlay={() => setVideoReady(true)}
-        onLoadedData={() => setVideoReady(true)}
+        poster={`${base}hero-bg.wepb`}
+        className="pointer-events-none fixed inset-0 -z-20 h-full w-full object-cover"
       >
         <source src={`${base}hero-bg.mp4`} type="video/mp4" />
       </video>
@@ -230,11 +191,7 @@ export function Layout() {
 
           {/* ===================== 데스크탑 메뉴 ===================== */}
           <nav className="hidden gap-8 text-base lg:text-[17px] text-white/80 md:flex">
-            <Link
-              to="/"
-              className="hover:text-white"
-              onClick={handleNavClick("/")}
-            >
+            <Link to="/" className="hover:text-white" onClick={handleNavClick("/")}>
               홈
             </Link>
 
@@ -245,9 +202,7 @@ export function Layout() {
                 if (aboutHoverLock) return;
                 setAboutMenuOpen(true);
               }}
-              onMouseLeave={() => {
-                setAboutMenuOpen(false);
-              }}
+              onMouseLeave={() => setAboutMenuOpen(false)}
             >
               <Link
                 to="/about"
@@ -257,7 +212,6 @@ export function Layout() {
                 ].join(" ")}
                 onClick={(e) => {
                   handleNavClick("/about")(e);
-
                   setAboutMenuOpen(false);
                   setAboutHoverLock(true);
                   window.setTimeout(() => setAboutHoverLock(false), 350);
@@ -265,14 +219,12 @@ export function Layout() {
                 aria-haspopup="menu"
                 aria-expanded={aboutMenuOpen}
               >
-                연구소 소개
-                <span className="text-[12px] opacity-80">▾</span>
+                연구소 소개 <span className="text-[12px] opacity-80">▾</span>
               </Link>
 
-              {/* ✅ hover 이동할 때 끊김 방지용 bridge */}
+              {/* ✅ hover 이동 끊김 방지 bridge */}
               <div className="absolute left-0 top-full h-3 w-[180px]" />
 
-              {/* Dropdown panel */}
               <div
                 className={[
                   "absolute left-0 top-full mt-3 w-[180px] rounded-2xl border border-white/10",
@@ -290,9 +242,7 @@ export function Layout() {
                     to="/about"
                     className={[
                       "block rounded-xl px-3 py-2 text-[14px] text-white/85 hover:bg-white/10 hover:text-white",
-                      location.pathname === "/about"
-                        ? "bg-white/10 text-white"
-                        : "",
+                      location.pathname === "/about" ? "bg-white/10 text-white" : "",
                     ].join(" ")}
                     onClick={(e) => {
                       handleNavClick("/about")(e);
@@ -309,9 +259,7 @@ export function Layout() {
                     to="/about/role"
                     className={[
                       "mt-1 block rounded-xl px-3 py-2 text-[14px] text-white/85 hover:bg-white/10 hover:text-white",
-                      location.pathname === "/about/role"
-                        ? "bg-white/10 text-white"
-                        : "",
+                      location.pathname === "/about/role" ? "bg-white/10 text-white" : "",
                     ].join(" ")}
                     onClick={(e) => {
                       handleNavClick("/about/role")(e);
@@ -327,25 +275,13 @@ export function Layout() {
               </div>
             </div>
 
-            <Link
-              to="/team"
-              className="hover:text-white"
-              onClick={handleNavClick("/team")}
-            >
+            <Link to="/team" className="hover:text-white" onClick={handleNavClick("/team")}>
               연구진
             </Link>
-            <Link
-              to="/services"
-              className="hover:text-white"
-              onClick={handleNavClick("/services")}
-            >
+            <Link to="/services" className="hover:text-white" onClick={handleNavClick("/services")}>
               연구서비스
             </Link>
-            <Link
-              to="/contact"
-              className="hover:text-white"
-              onClick={handleNavClick("/contact")}
-            >
+            <Link to="/contact" className="hover:text-white" onClick={handleNavClick("/contact")}>
               문의하기
             </Link>
           </nav>
@@ -371,7 +307,6 @@ export function Layout() {
           ].join(" ")}
           aria-hidden={!mobileOpen}
         >
-          {/* Backdrop */}
           <div
             className={[
               "absolute inset-0",
@@ -385,7 +320,6 @@ export function Layout() {
             }}
           />
 
-          {/* Panel */}
           <aside
             className={[
               "absolute right-0 top-0 h-full w-[86%] max-w-[360px]",
@@ -399,7 +333,6 @@ export function Layout() {
             aria-label="모바일 메뉴"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Drawer Header */}
             <div className="px-4">
               <div className="flex items-center justify-between">
                 <div className="flex min-w-0 items-center gap-3">
@@ -436,7 +369,6 @@ export function Layout() {
               <div className="mt-4 h-px w-full bg-white/10" />
             </div>
 
-            {/* Drawer Nav */}
             <nav className="mt-3 flex flex-col gap-1 px-4 text-base text-white/90">
               <Link
                 to="/"
@@ -446,7 +378,6 @@ export function Layout() {
                 홈
               </Link>
 
-              {/* ✅ 모바일: 연구소 소개 펼치기 */}
               <button
                 type="button"
                 className={[
@@ -464,13 +395,10 @@ export function Layout() {
                 </span>
               </button>
 
-              {/* ✅ 펼쳐진 하위 링크: 개요 / 역할 */}
               <div
                 className={[
                   "overflow-hidden transition-all duration-200",
-                  mobileAboutOpen
-                    ? "max-h-40 opacity-100"
-                    : "max-h-0 opacity-0",
+                  mobileAboutOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0",
                 ].join(" ")}
               >
                 <div className="mt-1 ml-2 flex flex-col gap-1 border-l border-white/10 pl-3">
@@ -478,9 +406,7 @@ export function Layout() {
                     to="/about"
                     className={[
                       "rounded-2xl px-3 py-2 text-[15px] text-white/85 hover:bg-white/10 active:bg-white/10",
-                      location.pathname === "/about"
-                        ? "bg-white/10 text-white"
-                        : "",
+                      location.pathname === "/about" ? "bg-white/10 text-white" : "",
                     ].join(" ")}
                     onClick={handleNavClick("/about")}
                   >
@@ -490,9 +416,7 @@ export function Layout() {
                     to="/about/role"
                     className={[
                       "rounded-2xl px-3 py-2 text-[15px] text-white/85 hover:bg-white/10 active:bg-white/10",
-                      location.pathname === "/about/role"
-                        ? "bg-white/10 text-white"
-                        : "",
+                      location.pathname === "/about/role" ? "bg-white/10 text-white" : "",
                     ].join(" ")}
                     onClick={handleNavClick("/about/role")}
                   >
@@ -581,9 +505,7 @@ export function Layout() {
             "pointer-events-none absolute left-0 right-0 z-10",
             "bottom-1 sm:bottom-2",
             "transition-all duration-700",
-            hideHomeCopyright
-              ? "opacity-0 translate-y-2 blur-sm"
-              : "opacity-100 blur-0",
+            hideHomeCopyright ? "opacity-0 translate-y-2 blur-sm" : "opacity-100 blur-0",
           ].join(" ")}
           aria-hidden={hideHomeCopyright}
         >
