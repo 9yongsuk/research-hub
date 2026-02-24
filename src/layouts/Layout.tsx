@@ -31,6 +31,9 @@ export function Layout() {
   // ✅ 같은 탭 다시 누를 때도 "탭이 나타나는" 느낌을 주기 위한 강제 리마운트 키
   const [routeNonce, setRouteNonce] = useState(0);
 
+  // ✅ 배경 비디오: 모바일 탭 이동/렌더링 때 멈춤 방지용
+  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
+
   // ✅ 현재 About 섹션 활성화 판단 (개요/역할 모두)
   const isAboutSection = useMemo(() => {
     return (
@@ -73,8 +76,10 @@ export function Layout() {
         // scroll indicator도 숨김 처리
         setHideScrollHint(true);
 
-        // 화면이 "다시 나타난다" 느낌(리마운트) 주기
-        setRouteNonce((n) => n + 1);
+        // ✅ "리마운트 느낌"은 Home에서만 (모바일 video 끊김 줄이기)
+        if (isHome) {
+          setRouteNonce((n) => n + 1);
+        }
       }
     };
 
@@ -99,14 +104,12 @@ export function Layout() {
       return;
     }
 
-    // 페이지 전환 시 다시 힌트를 보여줄 준비
     setHideScrollHint(false);
 
     const t = window.setTimeout(() => {
       const el = mainRef.current;
       if (!el) return;
 
-      // 새 페이지면 스크롤 위로 올리는 게 UX 좋음
       el.scrollTop = 0;
 
       const canScroll = el.scrollHeight > el.clientHeight + 2;
@@ -140,23 +143,49 @@ export function Layout() {
     };
   }, [mobileOpen]);
 
+  // ✅ 모바일에서 탭 이동(라우트 변경) 시 background video가 멈추는 문제 방지
+  useEffect(() => {
+    const v = bgVideoRef.current;
+    if (!v) return;
+
+    const resume = () => {
+      v.play().catch(() => {});
+    };
+
+    // 라우트 전환 직후 여러 번 시도 (모바일에서 꽤 효과적)
+    const t1 = window.setTimeout(resume, 0);
+    const t2 = window.setTimeout(resume, 80);
+
+    // iOS에서 화면 전환/탭 전환으로 숨김->복귀 시 재생 재시도
+    const onVis = () => {
+      if (!document.hidden) resume();
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [location.pathname]);
+
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden text-white flex flex-col">
       {/* ===== 공통 배경 (poster 방식) ===== */}
-      {/* ✅ 처음엔 poster/배경이미지로 '사진처럼' 보이고, 준비되면 비디오가 자동 재생됨 */}
-      {/* ⚠️ 파일명 오타 주의: hero-bg.wepb -> 보통 hero-bg.webp 가 정상 */}
+      {/* ✅ 파일명은 사용자 기준: hero-bg.webp */}
       <div
         className="pointer-events-none fixed inset-0 -z-30 bg-cover bg-center"
-        style={{ backgroundImage: `url(${base}hero-bg.wepb)` }}
+        style={{ backgroundImage: `url(${base}hero-bg.webp)` }}
       />
 
       <video
+        ref={bgVideoRef}
         autoPlay
         muted
         loop
         playsInline
-        preload="auto"
-        poster={`${base}hero-bg.wepb`}
+        preload="metadata"
+        poster={`${base}hero-bg.webp`}
         className="pointer-events-none fixed inset-0 -z-20 h-full w-full object-cover"
       >
         <source src={`${base}hero-bg.mp4`} type="video/mp4" />
@@ -278,10 +307,18 @@ export function Layout() {
             <Link to="/team" className="hover:text-white" onClick={handleNavClick("/team")}>
               연구진
             </Link>
-            <Link to="/services" className="hover:text-white" onClick={handleNavClick("/services")}>
+            <Link
+              to="/services"
+              className="hover:text-white"
+              onClick={handleNavClick("/services")}
+            >
               연구서비스
             </Link>
-            <Link to="/contact" className="hover:text-white" onClick={handleNavClick("/contact")}>
+            <Link
+              to="/contact"
+              className="hover:text-white"
+              onClick={handleNavClick("/contact")}
+            >
               문의하기
             </Link>
           </nav>
@@ -307,6 +344,7 @@ export function Layout() {
           ].join(" ")}
           aria-hidden={!mobileOpen}
         >
+          {/* Backdrop */}
           <div
             className={[
               "absolute inset-0",
@@ -320,6 +358,7 @@ export function Layout() {
             }}
           />
 
+          {/* Panel */}
           <aside
             className={[
               "absolute right-0 top-0 h-full w-[86%] max-w-[360px]",
@@ -333,6 +372,7 @@ export function Layout() {
             aria-label="모바일 메뉴"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Drawer Header */}
             <div className="px-4">
               <div className="flex items-center justify-between">
                 <div className="flex min-w-0 items-center gap-3">
@@ -369,6 +409,7 @@ export function Layout() {
               <div className="mt-4 h-px w-full bg-white/10" />
             </div>
 
+            {/* Drawer Nav */}
             <nav className="mt-3 flex flex-col gap-1 px-4 text-base text-white/90">
               <Link
                 to="/"
@@ -378,6 +419,7 @@ export function Layout() {
                 홈
               </Link>
 
+              {/* ✅ 모바일: 연구소 소개 펼치기 */}
               <button
                 type="button"
                 className={[
@@ -395,6 +437,7 @@ export function Layout() {
                 </span>
               </button>
 
+              {/* ✅ 펼쳐진 하위 링크: 개요 / 역할 */}
               <div
                 className={[
                   "overflow-hidden transition-all duration-200",
@@ -475,7 +518,8 @@ export function Layout() {
               : "pb-12 sm:pb-16 overflow-y-auto",
         ].join(" ")}
       >
-        <div key={`${location.pathname}:${routeNonce}`} className="h-full">
+        {/* ✅ Home에서만 리마운트 키 적용 */}
+        <div key={`${location.pathname}:${isHome ? routeNonce : 0}`} className="h-full">
           <Outlet />
         </div>
 
