@@ -253,9 +253,8 @@ export default function Role() {
               </h1>
 
               <p className="mt-5 text-white/80 text-[15px] leading-relaxed max-w-[78ch]">
-                임상 현장의 치료 경험을 재현 가능하도록 표준화하고, 객관적 지표와
-                분자·<br/>오믹스 기반 근거로 치료 효과를 검증하여 임상 적용 가능성을
-                높입니다.
+                로안365한의원 기업부설연구소로서 임상 현장에서 축적되는 데이터를 표준화하고,<br/> 과학적 근거로
+              확장하기 위한 연구를 수행합니다.
               </p>
 
               {/* Mission block */}
@@ -307,7 +306,7 @@ export default function Role() {
         임상 기반 근거 확장
       </h3>
       <p className="mt-2 text-white/70 text-[14px] leading-relaxed">
-        진료 프로세스와 성과를 데이터화하고, 연구 설계/평가 지표를 구축하여
+        로안365한의원 기업부설연구소로서 진료 프로세스와 성과를 데이터화하고, 연구 설계/평가 지표를 구축하여
         임상 근거를 확장합니다.
       </p>
     </div>
