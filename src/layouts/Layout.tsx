@@ -1,3 +1,4 @@
+// src/layouts/Layout.tsx
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -8,14 +9,11 @@ export function Layout() {
   const location = useLocation();
 
   // ✅ 데스크탑: 연구소 소개 드롭다운 상태 + 클릭 직후 잠깐 재오픈 방지(lock)
-const [aboutMenuOpen, setAboutMenuOpen] = useState(false);
-const [aboutHoverLock, setAboutHoverLock] = useState(false);
+  const [aboutMenuOpen, setAboutMenuOpen] = useState(false);
+  const [aboutHoverLock, setAboutHoverLock] = useState(false);
 
-// 라우트 변경 시 드롭다운 닫기 + lock 해제
-useEffect(() => {
-  setAboutMenuOpen(false);
-  setAboutHoverLock(false);
-}, [location.pathname]);
+  // ✅ 모바일: 연구소 소개 하위 메뉴 펼침/접힘
+  const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
 
   // ✅ Home 판별
   const isHome = useMemo(() => {
@@ -33,9 +31,37 @@ useEffect(() => {
   // ✅ 같은 탭 다시 누를 때도 "탭이 나타나는" 느낌을 주기 위한 강제 리마운트 키
   const [routeNonce, setRouteNonce] = useState(0);
 
-  // ✅ 모바일: 연구소 소개 하위 메뉴 펼침/접힘
-  const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
+  // ✅ 현재 About 섹션 활성화 판단 (개요/역할 모두)
+  const isAboutSection = useMemo(() => {
+    return (
+      location.pathname === "/about" || location.pathname.startsWith("/about/")
+    );
+  }, [location.pathname]);
 
+  // ✅ 모바일 여부 + 모바일에서 "처음은 사진 → 비디오 준비되면 전환"
+  const [isMobile, setIsMobile] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener?.("change", apply);
+    return () => mq.removeEventListener?.("change", apply);
+  }, []);
+
+  // 모바일에서는 라우트/상태 변동 때도 체감 좋게 videoReady 리셋 (원치 않으면 제거해도 됨)
+  useEffect(() => {
+    if (isMobile) setVideoReady(false);
+  }, [isMobile, location.pathname]);
+
+  // 라우트 변경 시 드롭다운 닫기 + lock 해제 + 모바일 메뉴 닫기 + 모바일 about subnav도 닫기
+  useEffect(() => {
+    setAboutMenuOpen(false);
+    setAboutHoverLock(false);
+    setMobileOpen(false);
+    setMobileAboutOpen(false);
+  }, [location.pathname]);
 
   // ✅ 공용: main을 맨 위로 올리기
   const scrollMainToTop = (smooth = true) => {
@@ -68,12 +94,6 @@ useEffect(() => {
         setRouteNonce((n) => n + 1);
       }
     };
-
-  // 라우트가 바뀌면 모바일 메뉴 자동 닫기 + 모바일 about subnav도 닫기
-  useEffect(() => {
-    setMobileOpen(false);
-    setMobileAboutOpen(false);
-  }, [location.pathname]);
 
   // ✅ Home 진입 시 copyright 잠깐 보여주고 자동 fade out
   useEffect(() => {
@@ -126,7 +146,7 @@ useEffect(() => {
     return () => el.removeEventListener("scroll", onScroll);
   }, [hideScrollHint, location.pathname]);
 
-  // ✅ Drawer가 열려 있을 때, 배경 스크롤/터치 스크롤 감각까지 더 확실히 잠그고 싶으면
+  // ✅ Drawer가 열려 있을 때, 배경 스크롤/터치 스크롤 감각까지 더 확실히 잠금
   useEffect(() => {
     if (!mobileOpen) return;
 
@@ -137,29 +157,51 @@ useEffect(() => {
     };
   }, [mobileOpen]);
 
-  // ✅ 현재 About 섹션 활성화 판단 (개요/역할 모두)
-  const isAboutSection = useMemo(() => {
-    return location.pathname === "/about" || location.pathname.startsWith("/about/");
-  }, [location.pathname]);
-
   return (
     <div className="relative h-[100dvh] w-full overflow-hidden text-white flex flex-col">
       {/* ===== 공통 배경 ===== */}
+      {/* 1) 항상 깔아두는 배경 이미지 */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-30 bg-cover bg-center"
+        style={{ backgroundImage: `url(${base}hero-bg.jpg)` }}
+      />
+
+      {/* 2) 모바일에서 "처음엔 사진 → 비디오 준비되면 페이드 아웃" */}
+      {isMobile && (
+        <img
+          src={`${base}hero-bg.jpg`}
+          alt=""
+          aria-hidden="true"
+          className={[
+            "pointer-events-none fixed inset-0 -z-25 h-full w-full object-cover",
+            "transition-opacity duration-500",
+            videoReady ? "opacity-0" : "opacity-100",
+          ].join(" ")}
+          decoding="async"
+          loading="eager"
+        />
+      )}
+
+      {/* 3) 비디오 레이어 (모바일은 준비될 때까지 투명) */}
       <video
         autoPlay
         muted
         loop
         playsInline
         preload="auto"
-        className="pointer-events-none fixed inset-0 -z-20 h-full w-full object-cover"
+        poster={`${base}hero-bg.jpg`}
+        className={[
+          "pointer-events-none fixed inset-0 -z-20 h-full w-full object-cover",
+          "transition-opacity duration-500",
+          isMobile ? (videoReady ? "opacity-100" : "opacity-0") : "opacity-100",
+        ].join(" ")}
+        onCanPlay={() => setVideoReady(true)}
+        onLoadedData={() => setVideoReady(true)}
       >
         <source src={`${base}hero-bg.mp4`} type="video/mp4" />
       </video>
 
-      <div
-        className="pointer-events-none fixed inset-0 -z-30 bg-cover bg-center"
-        style={{ backgroundImage: `url(${base}hero-bg.jpg)` }}
-      />
+      {/* 오버레이 */}
       <div className="pointer-events-none fixed inset-0 -z-10 bg-black/55" />
 
       {/* ===== 공통 헤더 ===== */}
@@ -188,104 +230,108 @@ useEffect(() => {
 
           {/* ===================== 데스크탑 메뉴 ===================== */}
           <nav className="hidden gap-8 text-base lg:text-[17px] text-white/80 md:flex">
-            <Link to="/" className="hover:text-white" onClick={handleNavClick("/")}>
+            <Link
+              to="/"
+              className="hover:text-white"
+              onClick={handleNavClick("/")}
+            >
               홈
             </Link>
 
-          {/* ✅ 연구소 소개: hover로 항상 열림 + 클릭하면 즉시 닫히고 잠깐 재오픈 방지 */}
-          <div
-            className="relative"
-            onMouseEnter={() => {
-              if (aboutHoverLock) return; // 클릭 직후 잠깐 막기
-              setAboutMenuOpen(true);
-            }}
-            onMouseLeave={() => {
-              setAboutMenuOpen(false);
-            }}
-          >
-            <Link
-              to="/about"
-              className={[
-                "hover:text-white inline-flex items-center gap-1",
-                isAboutSection ? "text-white" : "",
-              ].join(" ")}
-              onClick={(e) => {
-                // /about에서 다시 눌렀을 때 리마운트/스크롤탑은 기존 로직대로
-                handleNavClick("/about")(e);
-
-                // ✅ 클릭 시 드롭다운 즉시 닫기 + 잠깐 hover 재오픈 방지
-                setAboutMenuOpen(false);
-                setAboutHoverLock(true);
-                window.setTimeout(() => setAboutHoverLock(false), 350);
-              }}
-              aria-haspopup="menu"
-              aria-expanded={aboutMenuOpen}
-            >
-              연구소 소개
-              <span className="text-[12px] opacity-80">▾</span>
-            </Link>
-
-            {/* ✅ hover 이동할 때 끊김 방지용 "bridge" */}
-            <div className="absolute left-0 top-full h-3 w-[180px]" />
-
-            {/* Dropdown panel */}
+            {/* ✅ 연구소 소개: hover로 열림 + 클릭하면 닫히고 잠깐 재오픈 방지 */}
             <div
-              className={[
-                "absolute left-0 top-full mt-3 w-[180px] rounded-2xl border border-white/10",
-                "bg-black/75 backdrop-blur-md shadow-2xl",
-                // ✅ 다른 요소(sticky 탭 등)에 가리지 않게
-                "z-[999]",
-                // ✅ open/close
-                "transition-all duration-150",
-                aboutMenuOpen
-                  ? "opacity-100 translate-y-0 pointer-events-auto"
-                  : "opacity-0 -translate-y-1 pointer-events-none",
-              ].join(" ")}
-              role="menu"
+              className="relative"
+              onMouseEnter={() => {
+                if (aboutHoverLock) return;
+                setAboutMenuOpen(true);
+              }}
+              onMouseLeave={() => {
+                setAboutMenuOpen(false);
+              }}
             >
-              <div className="p-2">
-                <Link
-                  to="/about"
-                  className={[
-                    "block rounded-xl px-3 py-2 text-[14px] text-white/85 hover:bg-white/10 hover:text-white",
-                    location.pathname === "/about" ? "bg-white/10 text-white" : "",
-                  ].join(" ")}
-                  onClick={(e) => {
-                    handleNavClick("/about")(e);
+              <Link
+                to="/about"
+                className={[
+                  "hover:text-white inline-flex items-center gap-1",
+                  isAboutSection ? "text-white" : "",
+                ].join(" ")}
+                onClick={(e) => {
+                  handleNavClick("/about")(e);
 
-                    // ✅ 클릭하면 즉시 닫기 + 잠깐 hover 재오픈 방지
-                    setAboutMenuOpen(false);
-                    setAboutHoverLock(true);
-                    window.setTimeout(() => setAboutHoverLock(false), 350);
-                  }}
-                  role="menuitem"
-                >
-                  개요
-                </Link>
+                  setAboutMenuOpen(false);
+                  setAboutHoverLock(true);
+                  window.setTimeout(() => setAboutHoverLock(false), 350);
+                }}
+                aria-haspopup="menu"
+                aria-expanded={aboutMenuOpen}
+              >
+                연구소 소개
+                <span className="text-[12px] opacity-80">▾</span>
+              </Link>
 
-                <Link
-                  to="/about/role"
-                  className={[
-                    "mt-1 block rounded-xl px-3 py-2 text-[14px] text-white/85 hover:bg-white/10 hover:text-white",
-                    location.pathname === "/about/role" ? "bg-white/10 text-white" : "",
-                  ].join(" ")}
-                  onClick={(e) => {
-                    handleNavClick("/about/role")(e);
+              {/* ✅ hover 이동할 때 끊김 방지용 bridge */}
+              <div className="absolute left-0 top-full h-3 w-[180px]" />
 
-                    // ✅ 클릭하면 즉시 닫기 + 잠깐 hover 재오픈 방지
-                    setAboutMenuOpen(false);
-                    setAboutHoverLock(true);
-                    window.setTimeout(() => setAboutHoverLock(false), 350);
-                  }}
-                  role="menuitem"
-                >
-                  역할
-                </Link>
+              {/* Dropdown panel */}
+              <div
+                className={[
+                  "absolute left-0 top-full mt-3 w-[180px] rounded-2xl border border-white/10",
+                  "bg-black/75 backdrop-blur-md shadow-2xl",
+                  "z-[999]",
+                  "transition-all duration-150",
+                  aboutMenuOpen
+                    ? "opacity-100 translate-y-0 pointer-events-auto"
+                    : "opacity-0 -translate-y-1 pointer-events-none",
+                ].join(" ")}
+                role="menu"
+              >
+                <div className="p-2">
+                  <Link
+                    to="/about"
+                    className={[
+                      "block rounded-xl px-3 py-2 text-[14px] text-white/85 hover:bg-white/10 hover:text-white",
+                      location.pathname === "/about"
+                        ? "bg-white/10 text-white"
+                        : "",
+                    ].join(" ")}
+                    onClick={(e) => {
+                      handleNavClick("/about")(e);
+                      setAboutMenuOpen(false);
+                      setAboutHoverLock(true);
+                      window.setTimeout(() => setAboutHoverLock(false), 350);
+                    }}
+                    role="menuitem"
+                  >
+                    개요
+                  </Link>
+
+                  <Link
+                    to="/about/role"
+                    className={[
+                      "mt-1 block rounded-xl px-3 py-2 text-[14px] text-white/85 hover:bg-white/10 hover:text-white",
+                      location.pathname === "/about/role"
+                        ? "bg-white/10 text-white"
+                        : "",
+                    ].join(" ")}
+                    onClick={(e) => {
+                      handleNavClick("/about/role")(e);
+                      setAboutMenuOpen(false);
+                      setAboutHoverLock(true);
+                      window.setTimeout(() => setAboutHoverLock(false), 350);
+                    }}
+                    role="menuitem"
+                  >
+                    역할
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
 
-            <Link to="/team" className="hover:text-white" onClick={handleNavClick("/team")}>
+            <Link
+              to="/team"
+              className="hover:text-white"
+              onClick={handleNavClick("/team")}
+            >
               연구진
             </Link>
             <Link
@@ -316,7 +362,7 @@ useEffect(() => {
           </button>
         </div>
 
-        {/* ===================== Mobile Drawer (overlay + fixed panel) ===================== */}
+        {/* ===================== Mobile Drawer ===================== */}
         <div
           className={[
             "md:hidden",
@@ -400,7 +446,7 @@ useEffect(() => {
                 홈
               </Link>
 
-              {/* ✅ 모바일: 연구소 소개는 "버튼"으로 펼치기 */}
+              {/* ✅ 모바일: 연구소 소개 펼치기 */}
               <button
                 type="button"
                 className={[
@@ -413,14 +459,18 @@ useEffect(() => {
                 onClick={() => setMobileAboutOpen((v) => !v)}
               >
                 <span>연구소 소개</span>
-                <span className="text-sm text-white/70">{mobileAboutOpen ? "▴" : "▾"}</span>
+                <span className="text-sm text-white/70">
+                  {mobileAboutOpen ? "▴" : "▾"}
+                </span>
               </button>
 
               {/* ✅ 펼쳐진 하위 링크: 개요 / 역할 */}
               <div
                 className={[
                   "overflow-hidden transition-all duration-200",
-                  mobileAboutOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0",
+                  mobileAboutOpen
+                    ? "max-h-40 opacity-100"
+                    : "max-h-0 opacity-0",
                 ].join(" ")}
               >
                 <div className="mt-1 ml-2 flex flex-col gap-1 border-l border-white/10 pl-3">
@@ -428,7 +478,9 @@ useEffect(() => {
                     to="/about"
                     className={[
                       "rounded-2xl px-3 py-2 text-[15px] text-white/85 hover:bg-white/10 active:bg-white/10",
-                      location.pathname === "/about" ? "bg-white/10 text-white" : "",
+                      location.pathname === "/about"
+                        ? "bg-white/10 text-white"
+                        : "",
                     ].join(" ")}
                     onClick={handleNavClick("/about")}
                   >
@@ -438,7 +490,9 @@ useEffect(() => {
                     to="/about/role"
                     className={[
                       "rounded-2xl px-3 py-2 text-[15px] text-white/85 hover:bg-white/10 active:bg-white/10",
-                      location.pathname === "/about/role" ? "bg-white/10 text-white" : "",
+                      location.pathname === "/about/role"
+                        ? "bg-white/10 text-white"
+                        : "",
                     ].join(" ")}
                     onClick={handleNavClick("/about/role")}
                   >
@@ -471,7 +525,6 @@ useEffect(() => {
 
               <div className="mt-3 h-px w-full bg-white/10" />
 
-              {/* Optional: 작은 안내/연락 */}
               <div className="mt-3 rounded-2xl border border-white/10 bg-white/5 p-3">
                 <div className="text-xs text-white/70">
                   연구 협업 및 문의는{" "}
@@ -498,12 +551,10 @@ useEffect(() => {
               : "pb-12 sm:pb-16 overflow-y-auto",
         ].join(" ")}
       >
-        {/* ✅ routeNonce로 같은 탭 클릭 시에도 Outlet이 "다시" 그려지게 */}
         <div key={`${location.pathname}:${routeNonce}`} className="h-full">
           <Outlet />
         </div>
 
-        {/* ✅ Scroll indicator: Home 제외 + 모바일 메뉴 열려있으면 제외 + 실제 스크롤 가능할 때만 */}
         {!isHome && !mobileOpen && showScrollHint && (
           <div
             className={[
@@ -530,7 +581,9 @@ useEffect(() => {
             "pointer-events-none absolute left-0 right-0 z-10",
             "bottom-1 sm:bottom-2",
             "transition-all duration-700",
-            hideHomeCopyright ? "opacity-0 translate-y-2 blur-sm" : "opacity-100 blur-0",
+            hideHomeCopyright
+              ? "opacity-0 translate-y-2 blur-sm"
+              : "opacity-100 blur-0",
           ].join(" ")}
           aria-hidden={hideHomeCopyright}
         >
