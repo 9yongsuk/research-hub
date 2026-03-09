@@ -165,9 +165,17 @@ export const teamMembers: Person[] = [
       { text: "대한중풍순환신경학회 정회원" },
     ],
     publications: [
-      { text: "Antiviral Effect of Hyunggaeyungyo-tang granule on A549 Cells Infected with Human Coronavirus (1저자, Evid Based Complement Alternat Med. 2021 Oct 6)" },
-      { text: "Complex Korean Medical Treatments for a patient with lumbar disc herniation accompanied by sleep disorders: A Case Report (공저, The Journal of Internal Korean Medicine)" },
-    ],
+      { text: "Antiviral Effect of Hyunggaeyungyo-Tang on A549 Cells Infected with Human Coronavirus (1저자, Evidence-based Complementary and Alternative Medicine : eCAM. 2021 Oct, SCI(E)등재지)" },
+      { text: "A Case Report of a Patient with Guillain-Barre Syndrome Complaining of Limb Weakness and Facial Paralysis That Improved After Korean Medicine Treatment (1저자, The Journal of Internal Korean Medicine. 2021 Sep, KCI등재지)" },
+      { text: "Systematic Review of Korean Medicine for the Treatment of Sixth Cranial Nerve Palsy (1저자, The Journal of Internal Korean Medicine. 2020 Jun, KCI등재지)" },
+      { text: "A Case Report of Ptosis and Eye Movement Limitation Caused by Idiopathic Oculomotor Nerve Palsy (공저, The Journal of Internal Korean Medicine. 2019 Jun, KCI등재지)" },
+      { text: "A Review of Clinical Studies for Treatment of Multiple System Atrophy Using the CNKI Database (공저, The Journal of Internal Korean Medicine. 2020 Sep, KCI등재지)" },
+      { text: "Successful Treatment of Cholelithiasis with Daesiho-tang : A Case Report (공저, The Journal of Internal Korean Medicine. 2020 Oct, KCI등재지)" },
+      { text: "A Patient with Intracerebral Hemorrhage Improved by Korean Medical Treatment including Pyung-Hyung Acupuncture: A Case Report (공저, The Journal of Internal Korean Medicine. 2021 Oct, KCI등재지)" },
+      { text: "A Case Report on Treating Post-stroke Visual Impairment with Gami-banhabakchulchunma-tang and Acupuncture (공저, The Journal of Internal Korean Medicine. 2021 Oct, KCI등재지)" },
+      { text: "A Case Report: Korean Medicine Treatment for Miller-Fisher Syndrome with Ophthalmoplegia (공저, The Journal of Internal Korean Medicine. 2022 Oct, KCI등재지)" },
+      { text: "Complex Korean Medical Treatments for a patient with lumbar disc herniation accompanied by sleep disorders: A Case Report (공저, The Journal of Internal Korean Medicine. 2025 Oct, KCI등재지)" },
+          ],
   },
 
   // =========================
